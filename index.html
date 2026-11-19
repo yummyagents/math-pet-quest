@@ -1,0 +1,3393 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>数学闯关 · 宠物图鉴</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    background:#070b16;
+    background-image:
+      repeating-linear-gradient(0deg,rgba(94,231,255,.04) 0 1px,transparent 1px 4px),
+      radial-gradient(circle at 50% 0%,#12203d 0%,#070b16 70%);
+    display:flex;align-items:center;justify-content:center;
+    font-family:"Microsoft YaHei","PingFang SC",sans-serif;
+    color:#eaf6ff;padding:12px;
+  }
+  #stage{
+    position:relative;width:min(97vw,1240px);aspect-ratio:16/9;
+    border:4px solid #2b3a63;background:#000;
+    box-shadow:0 0 0 4px #070b16, 10px 10px 0 rgba(0,0,0,.6), 0 0 40px rgba(94,231,255,.15);
+    overflow:hidden;
+  }
+  canvas{width:100%;height:100%;display:block;image-rendering:pixelated}
+  /* CRT 扫描线 */
+  #scan{
+    position:absolute;inset:0;pointer-events:none;
+    background:repeating-linear-gradient(0deg,rgba(0,0,0,.18) 0 1px,transparent 1px 3px);
+    mix-blend-mode:multiply;opacity:.55;
+  }
+  /* HUD（像素风计分条） */
+  #hud{
+    position:absolute;top:0;left:0;right:0;display:flex;gap:14px;align-items:center;
+    padding:10px 16px;pointer-events:none;
+    font-family:"Courier New",monospace;font-weight:900;
+  }
+  #hud .tag{
+    border:3px solid #2b1a08;background:rgba(43,26,8,.82);padding:4px 10px;
+    color:#ffd166;font-size:14px;letter-spacing:2px;
+    text-shadow:2px 2px 0 #2b1a08;box-shadow:3px 3px 0 rgba(43,26,8,.6);
+  }
+  #hud .hp{color:#ff5c7a;font-size:16px;letter-spacing:3px}
+  #hud .sc{
+    color:#fff3b0;font-size:20px;letter-spacing:4px;background:rgba(43,26,8,.85);
+    border:3px solid #2b1a08;padding:3px 12px;box-shadow:3px 3px 0 rgba(43,26,8,.6);
+  }
+  #hud .sc::before{content:'SCORE ';}
+  #hud .sc{color:#ffd166}
+  #hud .sp{margin-left:auto;display:flex;gap:8px;pointer-events:auto}
+  .iconbtn{
+    pointer-events:auto;cursor:pointer;border:3px solid #2b1a08;background:rgba(43,26,8,.85);
+    color:#ffd166;font-size:13px;font-weight:900;padding:4px 10px;font-family:"Courier New",monospace;
+    box-shadow:3px 3px 0 rgba(43,26,8,.6);letter-spacing:1px;
+  }
+  .iconbtn:hover{background:#ffd166;color:#2b1a08}
+  /* 方向控制键 */
+  .ctrlpad{
+    position:absolute;left:16px;bottom:16px;z-index:12;display:flex;gap:12px;
+    pointer-events:none;user-select:none;-webkit-user-select:none;
+  }
+  .ctrlpad.hide,.dbtn.hide{display:none}
+  .dbtn{
+    pointer-events:auto;cursor:pointer;touch-action:none;
+    width:76px;height:76px;display:flex;align-items:center;justify-content:center;
+    font-family:"Courier New",monospace;font-weight:900;font-size:36px;line-height:1;
+    color:#ffd166;background:rgba(43,26,8,.84);
+    border:4px solid #2b1a08;box-shadow:4px 4px 0 rgba(0,0,0,.55),inset 0 0 0 3px rgba(255,209,102,.16);
+    text-shadow:3px 3px 0 #2b1a08;transition:transform .05s;
+  }
+  .dbtn:active,.dbtn.on{background:#ffd166;color:#2b1a08;transform:translate(2px,2px);box-shadow:2px 2px 0 rgba(0,0,0,.55)}
+  @keyframes btnpulse{
+    0%,100%{box-shadow:4px 4px 0 rgba(0,0,0,.55),inset 0 0 0 3px rgba(255,209,102,.16)}
+    50%{box-shadow:4px 4px 0 rgba(0,0,0,.55),inset 0 0 0 7px rgba(255,209,102,.55)}
+  }
+  #btnRight.pulse{animation:btnpulse 1.1s ease-in-out infinite}
+  .dbtn.jump{
+    position:absolute;right:16px;bottom:16px;z-index:12;
+    font-size:17px;letter-spacing:2px;color:#9fd8ff;background:rgba(16,28,54,.9);
+    border-color:#3d5a8f;box-shadow:4px 4px 0 rgba(0,0,0,.55),inset 0 0 0 3px rgba(94,231,255,.14);
+    text-shadow:2px 2px 0 #07111f;
+  }
+  .dbtn.jump:active,.dbtn.jump.on{background:#5ee7ff;color:#07111f}
+  @media (max-width:640px){
+    .dbtn{width:60px;height:60px;font-size:28px;border-width:3px}
+    .dbtn.jump{width:60px;height:60px;font-size:14px}
+    .ctrlpad{left:10px;bottom:10px;gap:8px}
+    .dbtn.jump{right:10px;bottom:10px}
+  }
+  /* 像素按钮通用 */
+  .pbtn{
+    cursor:pointer;font-family:inherit;font-weight:800;font-size:15px;color:#08111f;
+    background:#5ee7ff;border:3px solid #07111f;padding:10px 18px;
+    box-shadow:5px 5px 0 #07111f;transition:transform .06s,box-shadow .06s;
+    letter-spacing:1px;
+  }
+  .pbtn:hover{filter:brightness(1.08)}
+  .pbtn:active{transform:translate(3px,3px);box-shadow:2px 2px 0 #07111f}
+  .pbtn.alt{background:#ffd166}
+  .pbtn.ghost{background:#1b2a4a;color:#9fd8ff;border-color:#3d5a8f;box-shadow:5px 5px 0 #07111f}
+  /* 覆盖层 */
+  .layer{
+    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    background:rgba(4,8,18,.86);padding:16px;z-index:20;
+  }
+  .layer.hide{display:none}
+  .panel{
+    width:min(760px,96%);max-height:96%;overflow:auto;
+    background:#0d1730;border:4px solid #5ee7ff;box-shadow:8px 8px 0 rgba(0,0,0,.6);
+    padding:20px 22px;
+  }
+  .panel h2{font-size:22px;letter-spacing:2px;color:#5ee7ff;margin-bottom:4px;text-shadow:3px 3px 0 #07111f}
+  .panel .sub{font-size:12px;color:#7fa3c9;margin-bottom:14px;letter-spacing:1px}
+  .panel p{font-size:13.5px;line-height:1.85;color:#c8ddf2;margin-bottom:8px}
+  .panel b{color:#ffd166}
+  .panel .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+  /* 关卡地图 */
+  .map{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin:6px 0 4px}
+  .lv{
+    cursor:pointer;border:3px solid #2b3a63;background:#101c36;padding:10px 8px;text-align:center;
+    transition:.12s;position:relative;
+  }
+  .lv:hover{border-color:#5ee7ff;transform:translateY(-3px)}
+  .lv.lock{opacity:.38;cursor:not-allowed;filter:grayscale(1)}
+  .lv .n{font-size:11px;color:#7fa3c9;letter-spacing:1px}
+  .lv .t{font-size:14px;font-weight:800;color:#eaf6ff;margin:4px 0 2px}
+  .lv .s{font-size:13px;color:#ffd166;letter-spacing:1px}
+  .lv .ico{font-size:20px;line-height:1.2}
+  /* 题目卡 */
+  #qcard{
+    position:absolute;left:50%;top:36px;bottom:26px;transform:translateX(-50%);
+    width:min(760px,96%);z-index:15;overflow:auto;
+    background:#0d1730;border:4px solid #5ee7ff;box-shadow:0 0 0 4px rgba(7,17,31,.8),0 10px 0 rgba(0,0,0,.5);
+    padding:14px 16px 16px;
+  }
+  #qcard.hide{display:none}
+  #qcard.ok{border-color:#3ddc97;box-shadow:0 0 0 4px rgba(61,220,151,.35),0 10px 0 rgba(0,0,0,.5)}
+  #qcard.no{border-color:#ff5c7a;animation:qshake .3s}
+  @keyframes qshake{
+    0%,100%{transform:translateX(-50%)}
+    20%{transform:translateX(calc(-50% - 9px))}
+    60%{transform:translateX(calc(-50% + 9px))}
+  }
+  #qtag{font-size:11px;letter-spacing:2px;color:#7fa3c9;margin-bottom:4px}
+  #qtext{font-size:18px;font-weight:800;line-height:1.5;color:#eaf6ff;margin-bottom:10px}
+  #qtext .mono{font-family:"Courier New",monospace;color:#ffd166;font-size:22px;letter-spacing:2px}
+  #opts{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+  .opt{
+    cursor:pointer;font-family:"Courier New",monospace;font-weight:800;font-size:20px;
+    background:#16233f;border:3px solid #3d5a8f;color:#eaf6ff;padding:10px 12px;text-align:center;
+    box-shadow:4px 4px 0 #07111f;letter-spacing:1px;
+  }
+  .opt:hover{background:#1e3054;border-color:#5ee7ff}
+  .opt.ok{background:#12634a;border-color:#3ddc97}
+  .opt.no{background:#5c1526;border-color:#ff5c7a}
+  .opt .k{color:#5ee7ff;font-size:13px;margin-right:6px}
+  /* 数字键盘 */
+  #pad{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;max-width:420px;margin:0 auto}
+  .key{
+    cursor:pointer;font-family:"Courier New",monospace;font-weight:800;font-size:19px;
+    background:#16233f;border:3px solid #3d5a8f;color:#eaf6ff;padding:6px 0;text-align:center;
+    box-shadow:4px 4px 0 #07111f;
+  }
+  .key:hover{background:#1e3054}
+  .key.fn{background:#1b2a4a;color:#9fd8ff;font-size:13px}
+  .key.go{background:#3ddc97;color:#07111f;border-color:#07111f;grid-column:span 2}
+  .key.clr{background:#1b2a4a;color:#9fd8ff;font-size:13px;grid-column:span 3}
+  #answerBox{
+    text-align:center;font-family:"Courier New",monospace;font-size:24px;font-weight:800;
+    color:#ffd166;letter-spacing:6px;border-bottom:3px dashed #3d5a8f;
+    min-height:36px;margin:0 auto 10px;max-width:420px;padding:2px 0;
+  }
+  #fb{margin-top:8px;font-size:13px;line-height:1.7;color:#9fd8ff}
+  #fb .warnline{color:#ff9db2}
+  #fb .okline{color:#7df0bd}
+  #nextRow{margin-top:9px;text-align:center}
+  #nextRow .pbtn{font-size:14px;padding:8px 26px}
+  /* 7 天计划 */
+  .wgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin:8px 0}
+  .chip{border:2px solid #2b3a63;background:#101c36;text-align:center;padding:6px 2px}
+  .chip .dn{font-size:10px;color:#7fa3c9}
+  .chip .dv{font-size:15px;font-weight:800;color:#eaf6ff;line-height:1.4}
+  .chip .ds{font-size:10px;color:#ffd166;min-height:13px;letter-spacing:1px}
+  .chip.done{border-color:#3ddc97}
+  .chip.today{border-color:#ffd166;background:#2a2410;transform:translateY(-2px)}
+  .chip.rest{opacity:.4}
+  .chip.lock{opacity:.3}
+  @media (max-width:640px){ .wgrid{gap:4px} .chip .dv{font-size:12px} }
+  /* 学习分析 */
+  .abar{display:flex;align-items:center;gap:8px;margin:5px 0}
+  .abar .an{width:70px;font-size:12px;color:#9fd8ff;text-align:right;flex-shrink:0}
+  .abar .atr{flex:1;height:14px;background:#101c36;border:2px solid #2b3a63;position:relative}
+  .abar .af{height:100%;background:#3ddc97;transition:width .3s}
+  .abar .af.mid{background:#ffd166}
+  .abar .af.low{background:#ff5c7a}
+  .abar .av{width:46px;font-size:12px;color:#eaf6ff;font-weight:800;flex-shrink:0}
+  .wrq{border-left:3px solid #ff5c7a;background:#160f22;padding:6px 10px;margin:6px 0;font-size:12.5px;line-height:1.7;color:#c8ddf2}
+  .wrq b{color:#ff9db2}
+  .adv{border-left:3px solid #ffd166;background:#1d1a0e;padding:6px 10px;margin:6px 0;font-size:12.5px;line-height:1.7;color:#e8dfc0}
+  .dayrep{border:2px solid #2b3a63;background:#101c36;padding:10px 12px;margin:8px 0}
+  .dayrep h4{font-size:14px;color:#5ee7ff;margin-bottom:6px;letter-spacing:1px}
+  .dayrep .meta{font-size:11px;color:#7fa3c9;margin-bottom:6px}
+  #clearAnalysis{text-align:left;margin-top:8px}
+  /* 宠物图鉴 */
+  .petgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:10px 0}
+  .petcard{border:3px solid #2b3a63;background:#101c36;padding:8px 6px;text-align:center;position:relative}
+  .petcard.owned{border-color:#3d5a8f}
+  .petcard.full{border-color:#ffd166;background:#2a2410}
+  .petcard canvas{width:100%;image-rendering:pixelated}
+  .petcard .pn{font-size:13px;font-weight:800;color:#eaf6ff;margin-top:2px}
+  .petcard .ps{font-size:10px;color:#7fa3c9;margin-top:2px;line-height:1.5}
+  .petcard .ps .st1{color:#9fd8ff}
+  .petcard .ps .st2{color:#5ee7ff}
+  .petcard .ps .st3{color:#ffd166}
+  @media (max-width:640px){ .petgrid{grid-template-columns:repeat(2,1fr)} }
+  @media (max-width:640px){
+    #qcard{top:40px;bottom:12px;width:95%}
+    #qtext{font-size:16px}
+    .opt{font-size:17px;padding:8px}
+    .map{grid-template-columns:repeat(2,1fr)}
+    #hud{font-size:11px;gap:8px}
+  }
+</style>
+</head>
+<body>
+<div id="stage">
+  <canvas id="game" width="1280" height="720"></canvas>
+  <div id="scan"></div>
+
+  <div id="hud">
+    <span class="tag" id="hLevel">第 1 关</span>
+    <span class="hp" id="hHp">♥♥♥♥♥</span>
+    <span class="sc" id="hScore">0</span>
+    <span class="tag" id="hProg">0/0</span>
+    <span class="sp">
+      <button class="iconbtn" id="btnSound">🎵 开</button>
+      <button class="iconbtn" id="btnPets">🐾 宠物</button>
+      <button class="iconbtn" id="btnMap">关卡</button>
+    </span>
+  </div>
+
+  <div class="ctrlpad hide" id="ctrlMove">
+    <button class="dbtn" id="btnLeft" aria-label="往后退">◀</button>
+    <button class="dbtn" id="btnRight" aria-label="往前走">▶</button>
+  </div>
+  <button class="dbtn jump hide" id="btnJump" aria-label="跳">跳</button>
+
+  <div id="qcard" class="hide">
+    <div id="qtag">第 1 题</div>
+    <div id="qtext"></div>
+    <div id="opts"></div>
+    <div id="padWrap" class="hide" style="display:none"></div>
+    <div id="fb"></div>
+    <div id="nextRow"></div>
+  </div>
+
+  <div id="petLayer" class="layer hide">
+    <div class="panel">
+      <h2>🐾 宠物图鉴</h2>
+      <div class="sub" id="petSub"></div>
+      <div class="petgrid" id="petGrid"></div>
+      <p><b>怎么收：</b>每关的玩法不同——碰水晶、踩泡泡、够神灯、顶齿轮箱、打 BOSS，但目的都一样：<b>答对就救出一只宠物</b>（或孵出一颗蛋），收进图鉴。</p>
+      <p><b>怎么养：</b>每答对一道对应的题，那只族就 +1。<b>1 只 → 幼年期，5 只 → 成长期，12 只 → 完全体</b>。完全体越大只，跟在你身后的队宠也越大。</p>
+      <p><b>护盾：</b>每只<b>完全体</b>宠物，开局送 1 个护盾（最多 3 个）。答错时护盾替你挡一下，<b>不掉血</b>——养宠物的回报就体现在这里。</p>
+      <p>答错的题会变成「走丢的宠物」，按 <b>1-3-7 天</b>回来三次：任何一轮答对都算救援进度，但只有<b>三轮全过</b>它才真正计入图鉴；中间任何一次答错，回到第 1 天重新排队。</p>
+      <div class="row"><button class="pbtn" id="btnPetsClose">收好图鉴</button></div>
+    </div>
+  </div>
+
+  <div id="mapLayer" class="layer">
+    <div class="panel">
+      <h2>自由闯关 · 练手模式</h2>
+      <div class="sub">五关 50 题，随便打 · <b>不计入 7 天进度</b></div>
+      <div class="map" id="mapGrid"></div>
+      <p>怎么走：<b>按住 ▶ 前进、◀ 后退</b>，松手就站住（键盘 → ← 或 D / A）；<b>轻点跳得矮，按住跳得高</b>（空格 / ↑ / W / 「跳」）。</p>
+      <p>怎么出题：<b>每关的玩法都不一样</b>——第 1 关<b>走过去碰亮着的水晶</b>；第 2 关<b>跳起来踩破火苗泡泡</b>；第 3 关<b>跳到空中够到浮空的神灯</b>；第 4 关<b>从下面顶齿轮箱</b>；第 5 关前半段泡泡和箱子混着来，<b>最后 3 题是一只大守卫 BOSS，跳到它头上打 3 次</b>。答对就能把那只宠物救出来/孵出来，收进图鉴。跳起来时脚下有<b>落点标记</b>，对准目标会变绿。</p>
+      <p>宠物图鉴：<b>8 族宠物对应 8 类题</b>（口诀鸟、进位猴、竖式龟、两步狐、批改猫、算理熊、判断鹿、拆解龙）。答对 1 只幼年期、5 只成长期、<b>12 只完全体</b>——完全体宠物开局送护盾，答错时替你挡一下不掉血。最厉害的宠物会跟在你身后一起跑。</p>
+      <p>漏了怎么办：撞到泡泡 / BOSS 只会被<b>顶回来</b>，可以再试；<b>漏掉的宠物不会丢</b>，会在终点大门前等你，答完题门才开。</p>
+      <p>顺序永远不乱：每次踩中，出的都是「还没做的最前面那道题」。只有当前该处理的泡泡/蛋是醒着的（彩色、跳动、带感叹号），其他都在睡觉（灰色、Z 字），不用管。</p>
+      <p style="margin-top:12px">终点校门：<b>规定数量的题全部答完，校门才打开</b>。没做完就跑到门口，门是锁着的，会在门前把剩下的题一道一道补完。答错扣血，血掉光重打本关。</p>
+      <p style="margin-top:12px"><b>每天 10-15 分钟：</b>点「今日训练」进入 7 天综合计划，每天都覆盖口诀、进位链、竖式、<b>两步题</b>、<b>批改</b>、算理、判断、拆解八类题——每答对一类，对应族的宠物就 +1，把 8 族全部养到完全体，就是 7 天计划的最强目标。答错的题会变成「走丢的宠物」，按 1-3-7 天回来三轮，三轮全过才真正归队。下面是<b>练手模式</b>，五关随时可以打，不计入 7 天进度，到期的走丢宠物也会在这里出现。</p>
+      <div class="row">
+        <button class="pbtn" id="btnToday">今日训练</button>
+        <button class="pbtn alt" id="btnPlan">7 天计划</button>
+        <button class="pbtn ghost" id="btnPets3">🐾 宠物图鉴</button>
+        <button class="pbtn ghost" id="btnHelp">给家长看</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="planLayer" class="layer hide">
+    <div class="panel">
+      <h2>7 天综合闯关计划</h2>
+      <div class="sub" id="planSub"></div>
+      <div class="wgrid" id="planGrid"></div>
+      <p id="planDash" style="margin-top:10px"></p>
+      <div class="row">
+        <button class="pbtn" id="btnPlanStart">开始今日</button>
+        <button class="pbtn alt" id="btnReport">📊 学习分析</button>
+        <button class="pbtn ghost" id="btnPets2">🐾 图鉴</button>
+        <button class="pbtn ghost" id="btnPlanClose">返回</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="clearLayer" class="layer hide">
+    <div class="panel" style="text-align:center">
+      <h2 id="clearTitle">通关！</h2>
+      <div class="sub" id="clearSub"></div>
+      <div id="clearStars" style="font-size:40px;letter-spacing:8px;color:#ffd166;margin:10px 0"></div>
+      <p id="clearStat"></p>
+      <div id="clearAnalysis"></div>
+      <div class="row" style="justify-content:center">
+        <button class="pbtn alt" id="btnNext">下一关</button>
+        <button class="pbtn ghost" id="btnRetry">再打一次</button>
+        <button class="pbtn ghost" id="btnBack">回地图</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="failLayer" class="layer hide">
+    <div class="panel" style="text-align:center">
+      <h2 style="color:#ff5c7a">血用完了…</h2>
+      <div class="sub">没关系，这一关的怪你已经认识一半了</div>
+      <p id="failStat"></p>
+      <div class="row" style="justify-content:center">
+        <button class="pbtn" id="btnRetry2">再打一次</button>
+        <button class="pbtn ghost" id="btnBack2">回地图</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="reportLayer" class="layer hide">
+    <div class="panel">
+      <h2>每日学习分析</h2>
+      <div class="sub" id="reportSub"></div>
+      <div id="reportBody"></div>
+      <div class="row"><button class="pbtn" id="btnReportClose">关闭</button></div>
+    </div>
+  </div>
+
+  <div id="helpLayer" class="layer hide">
+    <div class="panel">
+      <h2>给家长看</h2>
+      <div class="sub">这个游戏在练什么、不练什么</div>
+      <p><b>五关对应手册里的五个训练模块，每关的场景和玩法都不一样：</b></p>
+      <p>第 1 关 口诀洞窟（水晶洞窟 · 走碰水晶）→ 附录 A 口诀闪卡，练<b>提取速度</b>。<br>
+         第 2 关 进位熔炉（火山岩浆 · 跳踩火苗泡泡）→ 手册 3.2「拆链训练」，练<b>乘积＋进位</b>这个断点。<br>
+         第 3 关 算理神殿（沙漠神殿 · 跳够浮空神灯）→ 手册 3.3 竖式口述，练<b>位值含义</b>。<br>
+         第 4 关 检查工坊（机械工坊 · 顶齿轮箱）→ 手册 3.4 两把刀，练<b>尾数法与估算法</b>。<br>
+         第 5 关 终局城堡（夜晚城堡 · 结尾 BOSS 三连战）→ 手册 3.5 四步模板，练<b>多步任务</b>。</p>
+      <p><b>7 天计划的场景和玩法会跟着轮换</b>（D1 洞窟碰水晶、D2 火山踩泡泡、D3 神殿够神灯、D4 工坊顶箱子、D5 城堡打 BOSS、D6 又回到洞窟……），孩子每天进游戏都能看到不一样的东西。</p>
+      <p><b>宠物系统的用处：</b>8 族宠物对应 8 类题，宠物养到完全体的过程 = 那一类动作反复练熟的过程。完全体宠物送护盾，能实实在在减少重打次数；「走丢的宠物按 1-3-7 天回来三轮、全过才归队」就是错题间隔复习，只是换成了孩子愿意主动打开的包装——而且只有连续三轮都做对同类新题，才算真的掌握了这个动作。注意：宠物会放大孩子的练习动机，但<b>不要替他答题</b>——答对了才有宠物，答案必须是他自己算的。</p>
+      <p><b>它不能替代什么：</b>游戏练的是判断和反应，<b>不练书写过程</b>。竖式的对位、进位小字、四步模板的分步书写，仍然要在纸上完成。建议游戏 10 分钟 + 纸笔 10 分钟，顺序不要反。</p>
+      <p><b>怎么读孩子的表现：</b>如果某一关反复重打，看他在哪一类题上掉血——那就是手册里对应的那一节，回去补。第 2 关掉血最多，说明「乘积＋进位」确实是他的断点；第 4 关掉血多，说明检查工具还没形成动作。</p>
+      <div class="row"><button class="pbtn" id="btnHelpClose">知道了</button></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ============ 基础 ============ */
+var cv = document.getElementById('game');
+var ctx = cv.getContext('2d');
+var V = {w:1280, h:720};
+var GROUND = 560;
+var HERO_W = 48, HERO_H = 64;
+var RUN = 4.0, JUMP_V = 12.6, GRAV = 0.62;
+var RUN_F = 4.4, RUN_B = 3.0;   // 孩子自己控制：前进快一点，后退慢一点
+var COYOTE = 6, JBUF = 8;       // 土狼时间 / 跳跃缓冲（手感）
+var $ = function(id){ return document.getElementById(id); };
+var clamp = function(v,a,b){ return v<a?a:(v>b?b:v); };
+
+/* ============ 音效 ============ */
+var soundOn = true;
+var actx = null;
+function beep(freq, dur, type, vol){
+  if(!soundOn) return;
+  try{
+    if(!actx) actx = new (window.AudioContext||window.webkitAudioContext)();
+    var o = actx.createOscillator(), g = actx.createGain();
+    o.type = type || 'square';
+    o.frequency.value = freq;
+    g.gain.value = vol == null ? 0.05 : vol;
+    o.connect(g); g.connect(actx.destination);
+    o.start();
+    g.gain.exponentialRampToValueAtTime(0.0001, actx.currentTime + (dur||0.12));
+    o.stop(actx.currentTime + (dur||0.12));
+  }catch(e){}
+}
+function sfxOk(){ beep(660,0.08,'square',0.05); setTimeout(function(){beep(990,0.1,'square',0.05);},70); }
+function sfxNo(){ beep(180,0.18,'sawtooth',0.05); }
+function sfxHit(){ beep(120,0.1,'square',0.06); }
+function sfxClear(){ [523,659,784,1046].forEach(function(f,i){ setTimeout(function(){beep(f,0.12,'square',0.05);}, i*110); }); }
+
+/* ============ 精灵 ============ */
+// 小学生：红帽/红领巾 + 白校服 + 蓝书包
+var HERO = [
+  "...cccccc...",
+  "..cccccccc..",
+  ".cccccccccc.",
+  "..ssssssss..",
+  "..ssksskss..",
+  "..ssssssss..",
+  "...ssrrss...",
+  "..rrrrrrrr..",
+  ".wwwwwwwwww.",
+  ".wwbwwwwbww.",
+  ".wwbwwwwbww.",
+  ".wwbwwwwbww.",
+  "..dddddddd..",
+  "..dd....dd..",
+  "..ss....ss..",
+  ".ooo....ooo."
+];
+var HERO_PAL = {c:'#e84c4c', s:'#ffcf9e', k:'#20222c', r:'#e84c4c', w:'#f7f4ec', b:'#3f6fd8', d:'#2b3a5c', o:'#39404f'};
+
+var SLIME = [
+  "............",
+  "....oooo....",
+  "..ooggggoo..",
+  ".oggggggggo.",
+  ".ogwgggwggo.",
+  ".oggggggggo.",
+  ".oggdddddgo.",
+  ".oggggggggo.",
+  "..ooggggoo..",
+  "....oooo...."
+];
+
+// 书本（顶砖弹出）
+var BOOK = [
+  ".ppppppp.",
+  "pwwwwwwwp",
+  "pwgggggwp",
+  "pwgwwwgwp",
+  "pwgwwwgwp",
+  "pwgggggwp",
+  "pwwwwwwwp",
+  ".ppppppp."
+];
+var BOOK_PAL = {p:'#c96a2d', w:'#fdf6e3', g:'#4a9d5b'};
+
+// 城堡守卫（终局 BOSS，程序化绘制，调色板备用）
+var BOSS_PAL = {h:'#c9a26b', b:'#5c4a7a', l:'#4a3a6b', k:'#0b0418', r:'#ff4d6d', d:'#2a1a3a'};
+
+/* ============ 宠物图鉴 ============
+   8 族宠物对应 8 类题。泡泡里的宠物被解救（踩怪答对）、蛋被孵化（顶砖答对）后入图鉴。
+   养成线：答对 1 只 = 幼年期，5 只 = 成长期，12 只 = 完全体。
+   完全体宠物每关开始时各送 1 个护盾（上限 3），答错时替你挡一下，不掉血。 */
+var BUBBLE = [
+  "....oooooo....",
+  "..oo......oo..",
+  ".o..........o.",
+  "o............o",
+  "o............o",
+  "o............o",
+  "o............o",
+  ".o..........o.",
+  "..oo......oo..",
+  "....oooooo...."
+];
+var EGG = [
+  "..oooo..",
+  ".obbbbo.",
+  "obbbbbbo",
+  "obbrrbbo",
+  "obbbrrbo",
+  "obbbbbbo",
+  "obbbbbbo",
+  ".obbbbo.",
+  "..oooo.."
+];
+var PETDEX = [
+  {id:'K', name:'咕咕鸟', tip:'口诀一秒报答案的小帮手',
+   pal:{o:'#8a5a1e', b:'#ffd166', l:'#fff3b0', k:'#20222c', r:'#ff8e52', w:'#ffffff', y:'#ffe9a8'},
+   rows:[
+    "..oooooooo..",
+    ".obbbbbbbbo.",
+    ".obkbbbbkbo.",
+    ".obbbrrbbbo.",
+    ".obllllllbo.",
+    "ooblllllboo.",
+    ".obllllllbo.",
+    "..obbbbbbo..",
+    "...oooooo...",
+    ".....oo....."]},
+  {id:'C', name:'进进猴', tip:'「乘积＋进位」从不掉链子',
+   pal:{o:'#4a2c14', b:'#a9744f', l:'#e8c9a8', k:'#20222c', r:'#e8b98a', w:'#ffffff', y:'#c9a26b'},
+   rows:[
+    ".oo......oo.",
+    ".obo....obo.",
+    ".oboooooobo.",
+    ".obbbbbbbbo.",
+    ".obkbbbbkbo.",
+    ".obllrrllbo.",
+    ".obllllllbo.",
+    ".obllllllbo.",
+    "..obbbbbbo..",
+    "..oooooooo.."]},
+  {id:'V', name:'笔笔龟', tip:'一步一步写竖式，从不好快',
+   pal:{o:'#1e4a34', b:'#4a9d5b', l:'#a5d6a7', k:'#20222c', r:'#2e7d46', w:'#ffffff', y:'#c9e265'},
+   rows:[
+    "....oooo....",
+    "..oobbbbo...",
+    ".obbrrrrbbo.",
+    ".obbrbbbrbo.",
+    ".obbrrrrbbo.",
+    ".oobbbbbboo.",
+    "ooobboobooo.",
+    ".ob.o..o.bo.",
+    "..oo....oo..",
+    "............"]},
+  {id:'M', name:'双双狐', tip:'两步题永远记得走第二步',
+   pal:{o:'#7a3b14', b:'#ff8e52', l:'#ffe0cc', k:'#20222c', r:'#5c2e10', w:'#ffffff', y:'#ffd166'},
+   rows:[
+    ".oo......oo.",
+    ".obo....obo.",
+    ".oboooooobo.",
+    ".obbbbbbbbo.",
+    ".obkbbbbkbo.",
+    ".obwwrrwwbo.",
+    "..obwwwwbo..",
+    "...obwwbo...",
+    "..oobbbboo..",
+    "....oooo...."]},
+  {id:'X', name:'校校猫', tip:'当小老师，一眼看出错在哪步',
+   pal:{o:'#37474f', b:'#90a4ae', l:'#d7e2e8', k:'#20222c', r:'#5ee7ff', w:'#ffffff', y:'#ff5c7a'},
+   rows:[
+    ".oo.....oo..",
+    ".obo...obo..",
+    ".oboo.ooobo.",
+    ".obbbbbbbbo.",
+    ".obkbbbbkbo.",
+    ".obbbrrbbbo.",
+    ".owbbbbbbwo.",
+    "..obbbbbbo..",
+    "..oooooooo..",
+    "............"]},
+  {id:'S', name:'位位熊', tip:'最懂「8 个十」是什么意思',
+   pal:{o:'#4e342e', b:'#8d6e63', l:'#d7ccc8', k:'#20222c', r:'#a1887f', w:'#ffffff', y:'#ffd166'},
+   rows:[
+    ".oo......oo.",
+    "obbo....obbo",
+    ".oboooooobo.",
+    ".obbbbbbbbo.",
+    ".obkbbbbkbo.",
+    ".obbllllbbo.",
+    ".obllllllbo.",
+    ".obllllllbo.",
+    "..obbbbbbo..",
+    "..oooooooo.."]},
+  {id:'P', name:'估估鹿', tip:'动笔前先估一估，量级不对立刻发现',
+   pal:{o:'#5d4037', b:'#c9a26b', l:'#efe0c8', k:'#20222c', r:'#8d6e63', w:'#ffffff', y:'#6d4c41'},
+   rows:[
+    ".y........y.",
+    ".yy..oo..yy.",
+    ".oy.obbo.yo.",
+    "..oobbbboo..",
+    ".obbbbbbbbo.",
+    ".obkbbbbkbo.",
+    ".obbbllbbbo.",
+    "..obllllbo..",
+    "..oobbbboo..",
+    "....oooo...."]},
+  {id:'D', name:'步步龙', tip:'再难的应用题也能拆成小步走',
+   pal:{o:'#0d3a4a', b:'#4dd0e1', l:'#c8f4fa', k:'#20222c', r:'#1e88a5', w:'#ffffff', y:'#ffd166'},
+   rows:[
+    "..r..r..r...",
+    "..o..o..o...",
+    ".obbbbbbbbo.",
+    ".obkbbbbkbo.",
+    "yoobbbbbbooy",
+    ".obllllllbo.",
+    ".obllllllbo.",
+    "..obbbbbbo..",
+    "..oyo..oyo..",
+    "...oo..oo..."]}
+];
+var PET_STAGE = [1, 5, 12];       // 幼年 / 成长 / 完全体需要的答对数
+var PET_STAGENAME = ['???', '幼年期', '成长期', '完全体'];
+function grayPal(pal){
+  var g = {};
+  Object.keys(pal).forEach(function(k){ g[k] = '#566a82'; });
+  return g;
+}
+function petFam(pool){
+  for(var i=0;i<PETDEX.length;i++){ if(PETDEX[i].id === pool) return PETDEX[i]; }
+  return null;
+}
+function petStage(pool){
+  var f = petFam(pool);
+  if(!f) return 0;
+  var n = (save.pets && save.pets[pool]) ? save.pets[pool].n : 0;
+  var s = 0;
+  for(var i=0;i<PET_STAGE.length;i++){ if(n >= PET_STAGE[i]) s = i+1; }
+  return s;
+}
+function petGain(pool){
+  if(!petFam(pool)) return;
+  if(!save.pets) save.pets = {};
+  var p = save.pets[pool];
+  if(!p){ p = save.pets[pool] = {n:0}; }
+  p.n++;
+  save.lastPet = pool;
+  persist();
+}
+function shieldCount(){
+  var c = 0;
+  PETDEX.forEach(function(f){ if(petStage(f.id) >= 3) c++; });
+  return Math.min(3, c);
+}
+var LEVELS = [
+  {
+    name:'口诀洞窟', icon:'⛰', qtag:'口诀洞窟', poolTag:'K',
+    scene:'cave', style:'crystal', play:'走碰水晶',
+    theme:{sky1:'#0b1b3a',sky2:'#123a6b',ground:'#1f4d7a',g2:'#16395c',accent:'#5ee7ff',far:'#0f2444',enemy:'#39d98a'},
+    qs:[
+      {t:'c', q:'7 × 8 = ?', opts:['56','54','48','63'], ans:0, sol:'七八五十六。这个口诀是 78×5 那道题的邻居，必须一秒出。'},
+      {t:'c', q:'6 × 7 = ?', opts:['42','36','48','49'], ans:0, sol:'六七四十二。'},
+      {t:'c', q:'8 × 9 = ?', opts:['72','64','81','63'], ans:0, sol:'八九七十二。'},
+      {t:'c', q:'7 × 7 = ?', opts:['49','42','56','48'], ans:0, sol:'七七四十九。'},
+      {t:'c', q:'6 × 8 = ?', opts:['48','54','42','64'], ans:0, sol:'六八四十八。'},
+      {t:'c', q:'9 × 6 = ?', opts:['54','56','45','63'], ans:0, sol:'六九五十四。'},
+      {t:'c', q:'8 × 8 = ?', opts:['64','72','56','68'], ans:0, sol:'八八六十四。'},
+      {t:'c', q:'7 × 9 = ?', opts:['63','56','72','54'], ans:0, sol:'七九六十三。'},
+      {t:'c', q:'6 × 9 = ?', opts:['54','56','63','45'], ans:0, sol:'六九五十四。'},
+      {t:'c', q:'9 × 8 = ?', opts:['72','64','81','63'], ans:0, sol:'八九七十二。'},
+      {t:'c', q:'8 × 6 = ?', opts:['48','42','54','56'], ans:0, sol:'六八四十八。'},
+      {t:'c', q:'7 × 6 = ?', opts:['42','48','36','49'], ans:0, sol:'六七四十二。'}
+    ]
+  },
+  {
+    name:'进位熔炉', icon:'🔥', qtag:'进位熔炉', poolTag:'C',
+    scene:'volcano', style:'bubble', play:'踩火苗泡泡',
+    theme:{sky1:'#2a0d0d',sky2:'#5c1a12',ground:'#3a1a12',g2:'#2a120c',accent:'#ff8a3d',far:'#4a1408',enemy:'#ff6b35'},
+    qs:[
+      {t:'n', q:'35 + 4 = ?', ans:39, sol:'这就是 78×5 断掉的那一步：35 再加进位 4。'},
+      {t:'n', q:'6 + 3 = ?', ans:9, sol:'这就是 15×6 断掉的那一步：6 再加进位 3。'},
+      {t:'n', q:'56 + 2 = ?', ans:58, sol:'乘积加进位，先练这个接口。'},
+      {t:'n', q:'24 + 3 = ?', ans:27, sol:'24 加 3，别把进位丢了。'},
+      {t:'n', q:'42 + 5 = ?', ans:47, sol:'42 加 5。'},
+      {t:'n', q:'48 + 4 = ?', ans:52, sol:'48 加 4，要进位。'},
+      {t:'n', q:'18 + 7 = ?', ans:25, sol:'18 加 7。'},
+      {t:'n', q:'63 + 3 = ?', ans:66, sol:'63 加 3。'},
+      {t:'n', q:'78 × 5 = ?', ans:390, sol:'个位 8×5=40 进 4，十位 7×5=35，35+4=39 → 390。'},
+      {t:'n', q:'15 × 6 = ?', ans:90, sol:'个位 5×6=30 进 3，十位 1×6=6，6+3=9 → 90。'},
+      {t:'n', q:'68 × 5 = ?', ans:340, sol:'8×5=40 进 4，6×5=30，30+4=34 → 340。'},
+      {t:'n', q:'87 × 5 = ?', ans:435, sol:'7×5=35 进 3，8×5=40，40+3=43 → 435。'}
+    ]
+  },
+  {
+    name:'算理神殿', icon:'⛩', qtag:'算理神殿', poolTag:'S',
+    scene:'temple', style:'lantern', play:'跳够神灯',
+    theme:{sky1:'#07222a',sky2:'#0d4552',ground:'#1a4a4a',g2:'#123636',accent:'#ffd166',far:'#0f3540',enemy:'#4dd0e1'},
+    qs:[
+      {t:'c', q:'算 476×8，十位那一行算的是「8 个（　）」', opts:['7','70','700','8'], ans:1, sol:'十位上的 7 表示 7 个十，所以是 8 个 70，不是 7×8。'},
+      {t:'c', q:'476×8，十位那一行的乘积是多少？', opts:['56','560','64','480'], ans:1, sol:'8 个 70 是 560。这就是手册里那句「几个几」。'},
+      {t:'c', q:'253×4，个位进 1 个十，十位上一共是（　）个十', opts:['20','21','12','24'], ans:1, sol:'5×4=20 个十，加进上来的 1 个十，一共 21 个十。'},
+      {t:'c', q:'78×5，十位那行应该写 35 + 4 =（　）', opts:['36','39','31','40'], ans:1, sol:'错就错在这里：写成了 36，应该是 39。'},
+      {t:'c', q:'个位 8×5=40，向十位进 4。这个「4」表示（　）', opts:['4 个一','4 个十','4 个百','4 个千'], ans:1, sol:'从个位进到十位，进的是「十」，不是「一」。'},
+      {t:'c', q:'15×6，十位写 6+3=9，这个「9」表示（　）', opts:['9 个一','9 个十','90 个十','9 个百'], ans:1, sol:'十位上的 9 是 9 个十，也就是 90。'},
+      {t:'c', q:'508×4，十位是 0×4=0，再加进位 3，得（　）个十', opts:['0','3','30','4'], ans:1, sol:'0 也要参与计算，0+3=3 个十。中间有 0 最容易漏。'},
+      {t:'c', q:'246×3，十位 4×3=12，加个位进的 1，得（　）个十', opts:['12','13','11','14'], ans:1, sol:'12+1=13，写 3 进 1。'}
+    ]
+  },
+  {
+    name:'检查工坊', icon:'⚙', qtag:'检查工坊', poolTag:'P',
+    scene:'workshop', style:'gear', play:'顶齿轮箱',
+    theme:{sky1:'#1c1408',sky2:'#3d2a10',ground:'#3a2a18',g2:'#2a1d0c',accent:'#c9a227',far:'#2a1d0c',enemy:'#b0bec5'},
+    qs:[
+      {t:'c', q:'不计算，判断：46 × 7 = 282', opts:['对','错'], ans:1, sol:'错。46 接近 50，50×7=350，282 差太远。应得 322。'},
+      {t:'c', q:'不计算，判断：125 × 8 = 1000', opts:['对','错'], ans:0, sol:'对。125×8 是常用凑整，记住它。'},
+      {t:'c', q:'不计算，判断：78 × 5 = 360', opts:['对','错'], ans:1, sol:'错。末位都是 0，尾数法查不出；用估算：80×5=400，应得 390。'},
+      {t:'c', q:'不计算，判断：63 × 4 = 252', opts:['对','错'], ans:0, sol:'对。60×4=240，3×4=12，240+12=252。'},
+      {t:'c', q:'不计算，判断：58 × 3 = 174', opts:['对','错'], ans:0, sol:'对。50×3=150，8×3=24，150+24=174。'},
+      {t:'c', q:'不计算，判断：74 × 6 = 414', opts:['对','错'], ans:1, sol:'错。末位都是 4，尾数法失效；估算 70×6=420，应得 444。'},
+      {t:'c', q:'不计算，判断：63 × 7 = 421', opts:['对','错'], ans:1, sol:'错。末位都是 1，尾数法失效；60×7=420，应得 441。'},
+      {t:'c', q:'不计算，判断：324 × 3 = 962', opts:['对','错'], ans:1, sol:'错。300×3=900，24×3=72，应得 972。'},
+      {t:'c', q:'不计算，判断：15 × 6 = 80', opts:['对','错'], ans:1, sol:'错。这就是原题：6+3 算成了 8，应得 90。'},
+      {t:'c', q:'不计算，判断：49 × 5 = 245', opts:['对','错'], ans:0, sol:'对。50×5=250，减 1 个 5，正好 245。'}
+    ]
+  },
+  {
+    name:'终局城堡', icon:'🏰', qtag:'终局城堡', poolTag:'D',
+    scene:'castle', style:'boss', play:'Boss 三连战',
+    theme:{sky1:'#160a24',sky2:'#2e1250',ground:'#2a1a3a',g2:'#1e0f36',accent:'#ff4d6d',far:'#1e0f36',enemy:'#ff4d6d'},
+    qs:[
+      {t:'n', q:'家到学校 650 米，中午回家吃饭。一天上学放学一共走多少米？', ans:2600, sol:'去、回、去、回，四趟：650×4=2600 米。'},
+      {t:'n', q:'每步约 50 厘米，走 1200 步是多少米？', ans:600, sol:'1200×50=60000 厘米，换算成 600 米。'},
+      {t:'n', q:'每步约 50 厘米，走 1200 步是 600 米。如果原路返回，去和回一共走多少米？', ans:1200, sol:'单程 600 米，往返 600×2=1200 米。「往返」两个字不能漏。'},
+      {t:'n', q:'6 袋大米，每袋 15 千克。吃了 2 袋，还剩多少千克？', ans:60, sol:'(6−2)×15=4×15=60 千克。'},
+      {t:'n', q:'12345×9=111105，那么 123456×9=？', ans:1111104, sol:'位数增加，1 的个数也增加，最后是 …104。'},
+      {t:'c', q:'36÷6÷2 与 36÷(6×2)，谁大？', opts:['左边大','右边大','一样大'], ans:2, sol:'连续除以两个数，等于除以它们的积，所以一样大。'},
+      {t:'n', q:'一箱牛奶 12 瓶，每瓶 250 毫升。2 箱一共多少毫升？', ans:6000, sol:'12×250=3000，×2 得 6000 毫升，也就是 6 升。'},
+      {t:'c', q:'BOSS：78×5 和 15×6 都错在同一个地方，是哪里？', opts:['口诀背错了','乘积加进位','题目看错了','写错了数字'], ans:1, sol:'口诀没错，错在「乘完加进位」这一步。这就是你要盯住的那个接口。'}
+    ]
+  }
+];
+
+/* ============ 7 天综合计划引擎 ============ */
+var POOLNAME = {K:'口诀', C:'进位链', V:'竖式', M:'两步题', X:'批改', S:'算理', P:'判断', D:'拆解'};
+var GAPS = [1,3,7]; // 1-3-7 复习阶梯：走丢的宠物隔 1、3、7 天回来三次，三轮全过才归队
+
+/* ============ 确定性随机数 ============
+   用「日期 + 第几天」做种子：同一天重打，口诀/进位链/竖式出的是同一套题，
+   孩子错的那道能回头再看；换一天自动换新。 */
+var rndSeed = 0;
+function seedRnd(str){
+  var h = 2166136261, i, c;
+  for(i=0; i<str.length; i++){
+    h ^= str.charCodeAt(i);
+    h = Math.imul ? Math.imul(h, 16777619) : ((h * 16777619) & 0xffffffff);
+  }
+  rndSeed = (h >>> 0) || 12345;
+}
+function R(){
+  rndSeed = (rndSeed * 1664525 + 1013904223) >>> 0;
+  return rndSeed / 4294967296;
+}
+function todayKey(){
+  var d = new Date();
+  return d.getFullYear() + '-' + (d.getMonth()+1) + '-' + d.getDate();
+}
+function shuffleR(a){
+  for(var i=a.length-1;i>0;i--){
+    var j = Math.floor(R()*(i+1)), t = a[i]; a[i] = a[j]; a[j] = t;
+  }
+  return a;
+}
+
+/* 固定题库：算理 S、判断 P、拆解 D、批改 X 四类；口诀/进位链/竖式/两步题由生成器现出 */
+var PLANBANK = {
+  /* X · 批改找错：给孩子一个「已经错了的答案」，让他当小老师找出错在第几步。
+     这一类直接练自检能力——他的检查之所以查不出来，是因为不知道错会长什么样。 */
+  X: [
+    {t:'c', q:'小马算 354×7，写成了 2458。他错在哪一步？',
+     opts:['个位 4×7＝28 算错了','十位把 35 直接写下来，忘了加个位进的 2','百位 3×7＝21 算错了','积少写了一位'],
+     ans:1,
+     sol:'思路：先看哪一位不对，再反推动作。步骤：正确是 2478，他写 2458，只差十位——十位应是 35＋2＝37 写 7，他写了 35 里的 5；再看百位 24＝21＋3，说明他连进位都用成了 35 自己的 3。易错：这看着像「写错一个数字」，其实是整条进位链断了一环。'},
+    {t:'c', q:'238×6 写成了 1388，正确是 1428。错在哪？',
+     opts:['个位 8×6＝48 算错','十位 3×6＝18 直接写 8 进 1，没加个位进的 4','百位 2×6＝12 算错','乘数 6 看成了 5'],
+     ans:1,
+     sol:'思路：个位末位对不上就先查个位，对得上就查高位。步骤：末位都是 8，说明个位没错；十位应是 18＋4＝22 写 2 进 2，他写了 8 进 1——把「18 就写 8 进 1」当成了结果。易错：进位数字写在旁边却不参与运算，等于没写。'},
+    {t:'c', q:'47×6 写成了 272，正确是 282。错在哪？',
+     opts:['个位 7×6＝42 是对的，十位 24＋4 算成了 27','个位 7×6 算成了 32','十位 4×6 算成了 26','乘号看成了加号'],
+     ans:0,
+     sol:'思路：末位都是 2，个位没问题，错在十位。步骤：十位 4×6＝24，加个位进的 4 得 28，他写成 27，等于只加了 3。易错：进位少加 1，整题就少 10——这种错最难自己看出来。'},
+    {t:'c', q:'438－129＋67，小明写成 371，正确是 376。错在哪一步？',
+     opts:['第一步 438－129 算错了','第二步 309＋67 算错了','应该先算 129＋67','67 抄成了 62'],
+     ans:1,
+     sol:'思路：两步题要一步一核对。步骤：438－129＝309 是对的；309＋67 应是 376，他写 371。易错：第一步对了就以为整题对了，第二步没再算一遍——这正是他上次在这题上丢分的地方。'},
+    {t:'c', q:'357＋(271－168)，小明写成 487，正确是 460。错在哪？',
+     opts:['括号里 271－168 算错了','第二步 357＋103 算错了','应该先算 357＋271','把加号看成了减号'],
+     ans:1,
+     sol:'思路：括号先算，他这一步是对的。步骤：271－168＝103 正确；357＋103 应是 460，他写成 487，把 103 当成了 130。易错：第二步的数字搬错一位，答案就整个偏掉。'},
+    {t:'c', q:'78×5 写成 360，正确是 390。最可能是哪种错？',
+     opts:['个位 8×5＝40 算错了','十位 7×5＝35，加进位时把 4 记成了 1','乘数 5 看成了 4','末尾多写了一个 0'],
+     ans:1,
+     sol:'思路：差 30，正好是 3 个十，说明十位少加了 3 个十。步骤：正确十位 35＋4＝39；写成 36 就是 35＋1，进的 4 被记成了 1。易错：进位数字看一眼就忘，必须写下来并划掉确认。'},
+    {t:'c', q:'15×6 写成 80，正确是 90。错在哪？',
+     opts:['个位 5×6＝30 写 0 进 3 是对的','十位 1×6＋3 算成了 6＋2','乘数 6 看成了 5','十位应该写 15'],
+     ans:1,
+     sol:'思路：末位都是 0，个位没错。步骤：十位 1×6＝6，加进位的 3 得 9，他得 8——把进 3 记成了进 2。易错：差 10 的错，几乎都是进位记错一个数。'},
+    {t:'c', q:'(63＋27)÷9 写成 63＋27÷9＝66。错在哪？',
+     opts:['除法算错了','没有先算括号，先算了 27÷9','63＋27 应该等于 80','应该用乘法'],
+     ans:1,
+     sol:'思路：括号的作用就是「先算我」。步骤：正确是 (63＋27)÷9＝90÷9＝10；他先算 27÷9＝3，再加 63。易错：只要式子里有括号，第一步就必须是括号，没有例外。'},
+    {t:'c', q:'745－268＋139，小明写成 745－(268＋139)。这样错在哪？',
+     opts:['没错，结果一样','自己给后两个数加了括号，改变了运算顺序','268＋139 算错了','应该先加后减'],
+     ans:1,
+     sol:'思路：式子里没有括号，就从左往右算。步骤：正确 745－268＝477，477＋139＝616；他加括号后变成 745－407＝338。易错：题里没有括号，绝不能自己造一个。'},
+    {t:'c', q:'526×5，十位是 2×5＝10 加个位进的 3，应该怎么落笔？',
+     opts:['写 0 进 1','写 3 进 1','写 13 进 1','写 3 进 3'],
+     ans:1,
+     sol:'思路：先把「乘积＋进位」算成一个数，再看怎么落笔。步骤：10＋3＝13，写 3 进 1；百位 5×5＝25，加 1 得 26。正确结果 2630。易错：写 0 进 1 就是只用乘积、把进位的 3 丢了。'},
+    {t:'c', q:'算完一道三位数乘一位数，最该先查什么？',
+     opts:['把每个数字再抄一遍','看有没有没划掉的进位圈，再用估算核量级','数一数写了几行','看字写得整不整齐'],
+     ans:1,
+     sol:'思路：检查要查最容易错的地方，而不是重做一遍。步骤：先把进位圈逐个划掉确认加过；再用整十估算核量级（539×7≈3780）。易错：整题重算既慢又容易复制同一个错误。'},
+    {t:'c', q:'哪种做法最能防止「两步题只做了一步」？',
+     opts:['算快一点','动笔前在题号旁写 ①②，做完一步打一个钩','把题目多读一遍','写在草稿纸边上'],
+     ans:1,
+     sol:'思路：忘做第二步，是因为「还有一步」只记在脑子里。步骤：动笔前先写 ①②，等于把第二步写到纸上；做完一步打个钩，钩没打满就还没完。易错：靠「我会记得」——一算完注意力就清零了。'},
+    {t:'c', q:'999×4 写成了 3966，正确是 3996。错在哪？',
+     opts:['个位 9×4＝36 算错','十位 36 直接写 6 进 3，没加个位进的 3','百位 9×4 算成了 36','末尾多写一位'],
+     ans:1,
+     sol:'思路：三次进位都要加，逐位核。步骤：个位 36 写 6 进 3；十位应是 36＋3＝39 写 9 进 3，他写了 36 里的 6；百位 36＋3＝39。正确 3996。易错：连着几位都进位时，最容易在第二位开始「照抄乘积」。'},
+    {t:'c', q:'小明算 306×4 得 1224，这道题到底对不对？',
+     opts:['对，没有错','错，十位 0×4 漏了进位','错，百位 3×4 算错了','错，个位 6×4 算错了'],
+     ans:0,
+     sol:'思路：不要因为「有 0 看着别扭」就判错。步骤：个位 6×4＝24 写 4 进 2；十位 0×4＝0，加 2 得 2；百位 3×4＝12。结果 1224，完全正确。易错：中间有 0 时，孩子容易以为是错题；也容易在做题时把进位的 2 丢掉。'}
+  ],
+
+  S: [
+    {t:'c', q:'算 476×8，十位那一行算的是「8 个（　）」', opts:['7','70','700','80'], ans:1,
+     sol:'思路：先看 7 站在哪一位。476 里 7 在十位，表示 7 个十＝70，所以十位这一行算的是 8 个 70＝560。易错：把 7 当成 7 个一，直接算 7×8=56。'},
+    {t:'c', q:'476×8，十位这一行的乘积是（　）', opts:['56','560','64','480'], ans:1,
+     sol:'步骤：十位 7 表示 70，8 个 70 就是 70×8=560。这个 560 要写在十位那一行（末尾的 0 可以对齐十位）。易错：写成 56，把「个十」当成了「个一」。'},
+    {t:'c', q:'253×4，个位进 1 个十，十位一共是（　）个十', opts:['20','21','12','24'], ans:1,
+     sol:'步骤：个位 3×4=12，写 2 进 1；十位 5×4=20 个十，再加进上来的 1 个十，一共 21 个十（写 1 进 2）；百位 2×4=8，加 2 得 10。结果 1012。易错：忘了加进上来的那 1 个十。'},
+    {t:'c', q:'78×5 的十位应写 35 + 4 =（　）', opts:['36','39','31','40'], ans:1,
+     sol:'步骤：个位 8×5=40，写 0 进 4；十位 7×5=35，35+4=39，所以是 390。原题写成 360，等于把「进 4」记成了「进 1」——口诀没错，错在乘积加进位这一步。'},
+    {t:'c', q:'个位 8×5=40，向十位进 4。这个「4」表示（　）', opts:['4 个一','4 个十','4 个百','4 个千'], ans:1,
+     sol:'思路：进位的方向决定它的单位。从个位往十位进，进的每一份都是「一个十」，所以 4 表示 4 个十＝40。易错：把它当成 4 个一，十位就会少加 36。'},
+    {t:'c', q:'15×6 的十位写 6+3=9，这个「9」表示（　）', opts:['9 个一','9 个十','90 个十','9 个百'], ans:1,
+     sol:'步骤：十位 1×6=6 个十，个位 5×6=30 进 3 个十，6+3=9 个十＝90，所以结果是 90。原题写成 80，就是 6+3 算成了 6+2。'},
+    {t:'c', q:'508×4 的十位是 0×4=0，再加进位 3，得（　）个十', opts:['0','3','30','4'], ans:1,
+     sol:'步骤：个位 8×4=32，写 2 进 3；十位 0×4=0，0+3=3 个十，写 3；百位 5×4=20。结果 2032。易错：看到 0 就直接跳过，把进位的 3 丢了。'},
+    {t:'c', q:'246×3 的十位 4×3=12，加个位进的 1，得（　）个十', opts:['12','13','11','14'], ans:1,
+     sol:'步骤：个位 6×3=18，写 8 进 1；十位 4×3=12，12+1=13 个十，写 3 进 1；百位 2×3=6，加 1 得 7。结果 738。'},
+    {t:'c', q:'172×4，十位 7×4=28，写 8 进 2，这个「2」进到（　）', opts:['十位','百位','千位','个位'], ans:1,
+     sol:'思路：2 是「2 个十」，但十位已经写满 8，多出来的 2 个十要变成 2 个百，所以进到百位。步骤：172×4，个位 2×4=8；十位 7×4=28 写 8 进 2；百位 1×4=4，加 2 得 6 → 688。'},
+    {t:'c', q:'526×3，个位进 1，十位 2×3=6 加 1 得（　）', opts:['6','7','8','9'], ans:1,
+     sol:'步骤：个位 6×3=18，写 8 进 1；十位 2×3=6，6+1=7；百位 5×3=15。结果 1578。'},
+    {t:'c', q:'464×9，十位 6×9=54 加进位 3，得（　）', opts:['54','57','51','63'], ans:1,
+     sol:'步骤：个位 4×9=36，写 6 进 3；十位 6×9=54，54+3=57，写 7 进 5；百位 4×9=36，加 5 得 41。结果 4176。'},
+    {t:'c', q:'38×2，十位 3×2=6 加进位 1 得 7，这个 7 表示（　）', opts:['7 个一','7 个十','7 个百','70 个十'], ans:1,
+     sol:'步骤：个位 8×2=16，写 6 进 1；十位 3×2=6，6+1=7，这个 7 在十位上，表示 7 个十＝70。结果 76。'},
+    {t:'c', q:'乘法竖式为什么从个位算起？', opts:['因为从右往左写','因为进位是从低位进到高位','因为个位数字小','因为老师这样教'], ans:1,
+     sol:'思路：进位只会从低位往高位走。先算个位，才知道要向十位进几；先算十位，就不知道该加多少。所以顺序不能反。'},
+    {t:'c', q:'305×6，十位 0×6=0，再加个位进的 3，十位写（　）', opts:['0','3','30','6'], ans:1,
+     sol:'步骤：个位 5×6=30，写 0 进 3；十位 0×6=0，0+3=3，十位写 3；百位 3×6=18。结果 1830。中间有 0 的题最容易漏加进位。'},
+    {t:'c', q:'三位数乘一位数，积可能是（　）', opts:['三位数','四位数','三位或四位数','一定是四位数'], ans:2,
+     sol:'思路：看最高位乘完有没有进位。102×3=306 是三位数；526×3=1578 是四位数。所以两种都可能，不能凭感觉判断位数。'},
+    {t:'c', q:'竖式里进位的数写在哪里最不容易丢？', opts:['写在题目旁边','写在十位数字的右上方','记在心里','写在本子上'], ans:1,
+     sol:'思路：进位要写到「下一步马上要用」的位置。写在十位数字右上方，算十位时一抬头就看见；记在心里最容易在换行时丢掉，这正是 78×5 出错的原因之一。'},
+    {t:'c', q:'算 78×5 时把进位 4 漏掉了，结果会比正确答案少（　）', opts:['4','40','36','400'], ans:1,
+     sol:'思路：进的 4 是「4 个十」，不是「4 个一」。步骤：正确结果 390；漏加进位就是 350；390−350=40。易错：以为只少 4，所以觉得"差一点没关系"。'},
+    {t:'c', q:'476 × 8 的积是（　）', opts:['三位数','四位数','五位数','不能确定'], ans:1,
+     sol:'思路：先估量级再算。步骤：400×8=3200，已经超过 1000，所以一定是四位数；精确算 476×8=3808。易错：只看百位 4×8=32，觉得"三十二"，就把它当成三位数。'},
+    {t:'c', q:'三位数乘一位数，积的末尾是 0，最可能的原因是（　）', opts:['个位相乘正好得整十','十位是 0','进位丢了','一定算错了'], ans:0,
+     sol:'思路：积的末位只由两个因数的个位决定。步骤：8×5=40，末位当然是 0——这是正常的，不是错。易错：看到末尾 0 就怀疑自己算错，反复重算浪费时间。'},
+    {t:'c', q:'算完一道乘法，怀疑自己丢了进位，最快的检查方向是（　）', opts:['个位数字对不对','高位是否明显偏小','末尾有没有 0','数字写得整不整齐'], ans:1,
+     sol:'思路：丢进位只会让高位变小，永远不会改动个位。步骤：先用口诀验个位，再用估算看高位——46×7 算成 282，个位 2 对得上，但 50×7=350，282 明显偏小，就知道高位丢了进位。易错：只盯个位，以为"末位对就是对的"。'}
+  ],
+  P: [
+    {t:'c', q:'不计算，判断：46 × 7 = 282', opts:['对','错'], ans:1,
+     sol:'判断：错。用估算：46 接近 50，50×7=350，282 差太远。精确算：40×7=280，6×7=42，280+42=322。注意：尾数 6×7=42 末位是 2，和 282 对得上——尾数法在这里查不出错，必须用估算。'},
+    {t:'c', q:'不计算，判断：125 × 8 = 1000', opts:['对','错'], ans:0,
+     sol:'判断：对。125×8 是常用凑整（125×8=1000），记住它能省很多时间。验证：100×8=800，25×8=200，800+200=1000。'},
+    {t:'c', q:'不计算，判断：78 × 5 = 360', opts:['对','错'], ans:1,
+     sol:'判断：错。尾数法失效（末位都是 0）；换估算：80×5=400，78 比 80 少 2，少 2×5=10，应是 390。原题 360 少了 30，正是「进 4 记成进 1」的结果。'},
+    {t:'c', q:'不计算，判断：63 × 4 = 252', opts:['对','错'], ans:0,
+     sol:'判断：对。拆开算：60×4=240，3×4=12，240+12=252。估算也在 60×4=240 附近，合理。'},
+    {t:'c', q:'不计算，判断：58 × 3 = 174', opts:['对','错'], ans:0,
+     sol:'判断：对。50×3=150，8×3=24，150+24=174；估算 60×3=180 略高，174 合理。'},
+    {t:'c', q:'不计算，判断：74 × 6 = 414', opts:['对','错'], ans:1,
+     sol:'判断：错。尾数法失效（4×6=24，末位 4 对得上）；换估算：70×6=420，4×6=24，应是 444。414 比 444 少 30，典型的进位丢十。'},
+    {t:'c', q:'不计算，判断：63 × 7 = 421', opts:['对','错'], ans:1,
+     sol:'判断：错。尾数法失效（3×7=21，末位 1 对得上）；估算 60×7=420，3×7=21，应是 441。421 只算了 420+1。'},
+    {t:'c', q:'不计算，判断：324 × 3 = 962', opts:['对','错'], ans:1,
+     sol:'判断：错。300×3=900，24×3=72，900+72=972。962 少了 10，是十位进位算错。'},
+    {t:'c', q:'不计算，判断：15 × 6 = 80', opts:['对','错'], ans:1,
+     sol:'判断：错。个位 5×6=30 进 3；十位 1×6=6，6+3=9，应是 90。80 就是 6+3 算成了 6+2，正是原题的错误。'},
+    {t:'c', q:'不计算，判断：49 × 5 = 245', opts:['对','错'], ans:0,
+     sol:'判断：对。凑整法：50×5=250，49 比 50 少 1，少 5，250−5=245。'},
+    {t:'c', q:'不计算，判断：27 × 3 = 71', opts:['对','错'], ans:1,
+     sol:'判断：错。尾数 7×3=21 末位 1 对得上；估算 30×3=90，71 偏小。精确：20×3=60，7×3=21，60+21=81。'},
+    {t:'c', q:'不计算，判断：86 × 4 = 344', opts:['对','错'], ans:0,
+     sol:'判断：对。80×4=320，6×4=24，320+24=344；估算 90×4=360 略高，合理。'},
+    {t:'c', q:'不计算，判断：205 × 4 = 820', opts:['对','错'], ans:0,
+     sol:'判断：对。200×4=800，5×4=20，800+20=820。中间有 0 也没出错，可以放心。'},
+    {t:'c', q:'不计算，判断：38 × 5 = 180', opts:['对','错'], ans:1,
+     sol:'判断：错。个位 8×5=40 进 4；十位 3×5=15，15+4=19，应是 190。180 又是把进位记成进 3 或漏加。'},
+    {t:'c', q:'不计算，判断：47 × 6 = 272', opts:['对','错'], ans:1,
+     sol:'判断：错。个位 7×6=42 进 4；十位 4×6=24，24+4=28，应是 282。272 少了 10。'},
+    {t:'c', q:'不计算，判断：92 × 3 = 276', opts:['对','错'], ans:0,
+     sol:'判断：对。90×3=270，2×3=6，270+6=276；末尾 2×3=6 也对得上。'},
+    {t:'c', q:'不计算，判断：156 × 4 = 624', opts:['对','错'], ans:0,
+     sol:'判断：对。100×4=400，50×4=200，6×4=24，400+200+24=624。'},
+    {t:'c', q:'不计算，判断：407 × 8 = 3256', opts:['对','错'], ans:0,
+     sol:'判断：对。400×8=3200，7×8=56，3200+56=3256。中间 0 加进位这一步没出错。'}
+  ],
+  D: [
+    {t:'n', q:'家到学校 650 米，中午回家吃饭。一天上学、放学一共走多少米？', ans:2600,
+     sol:'思路：先把「走几趟」数清楚。上学 1 趟、中午回家 1 趟、再去学校 1 趟、放学回家 1 趟，一共 4 趟。步骤：650×4=2600 米。易错：只算 2 趟得 1300，漏掉中午的往返。'},
+    {t:'n', q:'每步约 50 厘米，走 1200 步是多少米？', ans:600,
+     sol:'思路：先算厘米，再换单位。步骤：1200×50=60000 厘米；100 厘米=1 米，60000÷100=600 米。易错：单位没换算，直接写 60000。'},
+    {t:'n', q:'每步约 50 厘米，走 1200 步是 600 米。如果原路返回，去和回一共多少米？', ans:1200,
+     sol:'思路：「原路返回」= 走两遍同样的路。步骤：单程 600 米，600×2=1200 米。易错：漏看「返回」，只写 600。'},
+    {t:'n', q:'6 袋大米，每袋 15 千克。吃了 2 袋，还剩多少千克？', ans:60,
+     sol:'思路：先求剩几袋，再乘每袋重量。步骤：6−2=4 袋，4×15=60 千克。另一种算法：6×15=90，2×15=30，90−30=60。易错：直接 6×15 忘了减。'},
+    {t:'n', q:'12345×9=111105，那么 123456×9=（　）', ans:1111104,
+     sol:'思路：先找规律再看位数。12345 是 5 位，积是 5 个 1 再接 05；123456 是 6 位，积就是 6 个 1 再接 04。步骤：1111104。验证：123456×10=1234560，减去 123456，得 1111104。'},
+    {t:'c', q:'36÷6÷2 与 36÷(6×2)，谁大？', opts:['左边大','右边大','一样大'], ans:2,
+     sol:'思路：连续除以两个数，等于除以它们的积。步骤：36÷6÷2=6÷2=3；36÷(6×2)=36÷12=3。所以一样大。这条规则能帮你把两步除法变成一步，算得更快。'},
+    {t:'n', q:'一箱牛奶 12 瓶，每瓶 250 毫升。2 箱一共多少毫升？', ans:6000,
+     sol:'思路：先算一箱，再算两箱。步骤：12×250=3000 毫升；3000×2=6000 毫升（也就是 6 升）。易错：先乘 2 再乘 12 也可以，但别把 250 漏掉。'},
+    {t:'n', q:'一袋大米重 15 千克，6 袋共重多少千克？', ans:90,
+     sol:'思路：求几个相同加数的和，用乘法。步骤：个位 5×6=30，写 0 进 3；十位 1×6=6，6+3=9，所以 15×6=90 千克。易错：写成 80（6+3 算成 6+2），单位别丢。'},
+    {t:'n', q:'一件上衣 68 元，一条裤子 45 元。买 3 套一共多少钱？', ans:339,
+     sol:'思路：「一套」= 上衣+裤子，先求一套的价钱。步骤：68+45=113 元；113×3=339 元。易错：只算上衣 68×3=204，漏了裤子。'},
+    {t:'n', q:'图书角有故事书 128 本，科技书是故事书的 3 倍。两种书一共多少本？', ans:512,
+     sol:'思路：先求科技书，再求总数。步骤：128×3=384 本；384+128=512 本。易错：只算到 384 就停，忘了问的是「一共」。'},
+    {t:'n', q:'汽车每小时行 65 千米，从 8:00 到 11:00 一共行多少千米？', ans:195,
+     sol:'思路：先求时间，再乘速度。步骤：11−8=3 小时；65×3=195 千米。易错：时间算成 4 小时（把 8 点也算进去）。'},
+    {t:'n', q:'3 盒彩笔，每盒 12 支，送给同学 15 支，还剩多少支？', ans:21,
+     sol:'思路：先求总数，再减送出的。步骤：3×12=36 支；36−15=21 支。易错：先减后乘，顺序反了。'},
+    {t:'n', q:'每箱苹果 25 千克，运来 4 箱，卖出 60 千克，还剩多少千克？', ans:40,
+     sol:'思路：先求总重量，再减卖出的。步骤：25×4=100 千克；100−60=40 千克。'},
+    {t:'n', q:'一本书 100 页，每天读 12 页，读了一周（7 天），还剩多少页？', ans:16,
+     sol:'思路：先求读了多少页。步骤：12×7=84 页；100−84=16 页。易错：把「一周」当成 5 天，得 40。'},
+    {t:'n', q:'一张桌子配 4 把椅子。学校买 8 张桌子，每把椅子 35 元，配齐椅子一共要多少钱？', ans:1120,
+     sol:'思路：先求椅子把数，再求钱数。步骤：8×4=32 把；32×35=1120 元（32×30=960，32×5=160）。易错：只算 8×35，把桌子和椅子配错。'},
+    {t:'n', q:'9×9=81，99×9=891，999×9=8991，那么 9999×9=（　）', ans:89991,
+     sol:'思路：看积的结构。9×9=81；每多一个 9，积就在 8 和 1 之间多一个 9。9999 有 4 个 9，积就是 8 后面 3 个 9 再接 1 → 89991。验证：9999×10=99990，减 9999 得 89991。'},
+    {t:'n', q:'小明有 3 盒卡片，每盒 24 张，送给同学 18 张，还剩多少张？', ans:54,
+     sol:'思路：先求总数，再减送出的。步骤：3×24=72 张；72−18=54 张。易错：72−18 算成 64（退位减法出错），可以用 72−20=52，再加 2 得 54 来验算。'},
+    {t:'n', q:'每辆车坐 45 人，来了 4 辆车。已经上车 168 人，还有多少人没上车？', ans:12,
+     sol:'思路：先求"一共能坐多少人"，再减"已经上车的"。步骤：45×4=180 个座位；180−168=12 人。易错：拿 168 直接去除以 45，题意没读清。'},
+    {t:'n', q:'一根绳子长 96 厘米，剪成每段 8 厘米。要剪几次？', ans:11,
+     sol:'思路：先求剪成几段，再想"段数"和"次数"差 1。步骤：96÷8=12 段；剪成 12 段只要剪 11 次。易错：直接答 12 次——这是最经典的"植树问题"陷阱，画一条线段数一数就清楚了。'},
+    {t:'n', q:'小明每天跳绳 120 下，坚持了 5 天，第 6 天跳了 150 下。这 6 天一共跳多少下？', ans:750,
+     sol:'思路：前 5 天一样多，可以乘；第 6 天不一样，单独加。步骤：120×5=600；600+150=750 下。易错：6×120=720 再加 150，把第 6 天算了两遍。'},
+    {t:'n', q:'一支钢笔 18 元，一个笔记本 7 元。买 3 支钢笔和 2 个笔记本，一共多少钱？', ans:68,
+     sol:'思路：两种商品分开算，最后相加。步骤：18×3=54 元；7×2=14 元；54+14=68 元。易错：只算一种，或者把 3 和 2 相乘。'},
+    {t:'n', q:'3 位老师带 42 名学生去公园。成人票 25 元，学生票 12 元。买票一共要多少元？', ans:579,
+     sol:'思路：两类人票价不同，必须分开算。步骤：老师 25×3=75 元；学生 12×42=504 元；75+504=579 元。易错：把 42 名学生也算成 25 元，或者漏掉 3 位老师。'},
+    {t:'n', q:'一筐苹果连筐重 25 千克，卖出一半苹果后，连筐重 13 千克。苹果净重多少千克？', ans:24,
+     sol:'思路：筐的重量没变，少掉的重量全是苹果。步骤：25−13=12 千克，这是一半苹果；12×2=24 千克。易错：把 12 当成全部苹果；或者用 25−13 后忘了乘 2。'},
+    {t:'n', q:'一本书共 180 页，已经读了 5 天，每天读 24 页。剩下的要在 2 天内读完，平均每天读多少页？', ans:30,
+     sol:'思路：先求还剩多少页，再平摊到 2 天。步骤：24×5=120 页已读；180−120=60 页；60÷2=30 页。易错：用 180÷2=90，忘了先减掉读过的部分。'}
+  ]
+};
+
+/* 7 天课程：八类题每天都出现，重点是「动作」而不是知识点。
+   K 口诀（原料）· C 进位链（乘积+进位）· V 竖式全流程 · M 两步题（防只做一步）
+   X 批改（养自检）· S 算理 · P 估算判断 · D 应用拆解 */
+var PLAN = [
+  {name:'先看清他在哪一步断', mix:[['K',2],['C',2],['V',2],['M',2],['X',1],['S',1],['P',1],['D',1]]},
+  {name:'进位动作定型',       mix:[['K',1],['C',3],['V',3],['M',1],['X',1],['P',1],['D',1],['S',1]]},
+  {name:'竖式写得慢一点',     mix:[['K',1],['C',2],['V',4],['M',1],['X',1],['S',1],['D',1],['P',1]]},
+  {name:'两步题与顺序',       mix:[['K',1],['C',1],['V',1],['M',5],['X',1],['S',1],['P',1],['D',1]]},
+  {name:'当小老师查错',       mix:[['K',1],['C',1],['V',2],['M',2],['X',3],['P',1],['D',1],['S',1]]},
+  {name:'八类混着来',         mix:[['K',2],['C',2],['V',2],['M',2],['X',1],['S',1],['P',1],['D',1]]},
+  {name:'毕业考',             mix:[['K',2],['C',2],['V',3],['M',3],['X',2],['S',1],['P',1],['D',1]]}
+];
+
+function koujueQ(a,b){
+  var ans = a*b;
+  var opts = [];
+  [ans-a, ans+a, ans-b, ans+b, ans-10, ans+10].forEach(function(c){
+    if(c>0 && c!==ans && opts.indexOf(c)<0 && opts.length<3) opts.push(c);
+  });
+  var guard = 0;
+  while(opts.length<3 && guard++<50){
+    var c = ans + (Math.floor(R()*9)+1) * (R()<0.5?-1:1);
+    if(c>0 && c!==ans && opts.indexOf(c)<0) opts.push(c);
+  }
+  opts.push(ans);
+  shuffleR(opts);
+  return {t:'c', q:a+' × '+b+' = ?', opts:opts.map(String), ans:opts.indexOf(ans),
+    sol:'口诀「'+a+'×'+b+'='+ans+'」要能一秒说出。想不起来就这样推：'+a+'×'+(b-1)+'='+(a*(b-1))+'，再加一个 '+a+'，得 '+ans+'。',
+    _meta:{g:'K',a:a,b:b}, _pool:'K'};
+}
+function genKoujue(){
+  var a = R()<0.6 ? (6+Math.floor(R()*4)) : (2+Math.floor(R()*5));   // 2..6 或 6..9
+  var b = R()<0.6 ? (6+Math.floor(R()*4)) : (2+Math.floor(R()*8));   // 2..9，不出「×10」
+  return koujueQ(a,b);
+}
+function genChain(){
+  var m,r,d,ones,carry,tens;
+  do{
+    m = 2 + Math.floor(R()*8);      // 十位 2..9
+    r = 1 + Math.floor(R()*9);      // 个位 1..9
+    d = 3 + Math.floor(R()*7);      // 乘数 3..9
+    ones = r*d; carry = Math.floor(ones/10); tens = m*d;
+  }while(carry<1 || tens<10);
+  var num = m*10 + r;
+  var total = (tens+carry)*10 + (ones%10);
+  return {t:'n',
+    q:'算 '+num+'×'+d+'，十位是 '+tens+' 加个位进的 '+carry+'，得（　）个十',
+    ans:tens+carry,
+    sol:'思路：先算个位，才知道往十位进几。步骤：个位 '+r+'×'+d+'='+ones+'，写 '+(ones%10)+' 进 '+carry+'；十位 '+m+'×'+d+'='+tens+'，'+tens+'+'+carry+'='+(tens+carry)+'，所以 '+num+'×'+d+'='+total+'。易错：只写 '+tens+' 忘了加进位——这正是原题 78×5 写成 360 的原因。',
+    _meta:{g:'C',m:m,r:r,d:d}, _pool:'C'};
+}
+var PLACE = ['个位','十位','百位','千位'];
+function genVertFrom(n,d){
+  var digits = String(n).split('').reverse().map(Number);
+  var carry = 0, parts = [], i;
+  for(i=0;i<digits.length;i++){
+    var prod = digits[i]*d + carry;
+    var step = PLACE[i]+' '+digits[i]+'×'+d+'='+(digits[i]*d);
+    if(carry) step += '，加进位 '+carry+' 得 '+prod;
+    if(i < digits.length-1 && Math.floor(prod/10) > 0){
+      step += '，写 '+(prod%10)+' 进 '+Math.floor(prod/10);
+    }
+    parts.push(step);
+    carry = Math.floor(prod/10);
+  }
+  return {t:'n', q:n+' × '+d+' = ?', ans:n*d,
+    sol:'思路：从个位算起，每一位都是「本位乘积＋进位」。步骤：'+parts.join('；')+'。结果 '+n*d+'。',
+    _meta:{g:'V',n:n,d:d}, _pool:'V'};
+}
+function genVert(hard){
+  var d = 3 + Math.floor(R()*7);            // 乘数 3..9
+  var ones = 5 + Math.floor(R()*5);         // 个位 5..9：乘 3 以上必进位，每道题都练到进位
+  var n, roll = R();
+  if(hard && roll < 0.6){
+    var pre = 10 + Math.floor(R()*40);      // 前两位 10..49 → 三位数
+    if(R() < 0.22) pre = Math.floor(pre/10)*10;   // 十位是 0，如 305、407
+    n = pre*10 + ones;
+  } else {
+    n = (1 + Math.floor(R()*9))*10 + ones;  // 两位数 15..99
+  }
+  return genVertFrom(n,d);
+}
+/* ============ M · 两步题（脱式）============
+   六种结构，全部两步，全部要求「先写①②再动笔」。
+   每一种的易错提示都指向「只做了第一步」或「符号/括号看错」这两个真实错因。 */
+function mixQ(k, a, b, c){
+  var q, ans, sol, meta = {g:'M', k:k, a:a, b:b, c:c};
+  if(k === 1){                              // (a ＋ b) ÷ c
+    var s1 = a + b, qv = s1 / c;
+    q = '(' + a + ' ＋ ' + b + ') ÷ ' + c + ' = ?';
+    ans = qv;
+    sol = '思路：括号是一整块，先算完括号再除。步骤：① ' + a + '＋' + b + '＝' + s1 + '；② ' + s1 + '÷' + c + '＝' + qv + '。易错：先算 ' + b + '÷' + c + ' 再加 ' + a + '，括号被跳过。';
+  } else if(k === 2){                       // a × (b ÷ c)
+    var qv2 = b / c;
+    q = a + ' × (' + b + ' ÷ ' + c + ') = ?';
+    ans = a * qv2;
+    sol = '思路：括号在乘号后面，也一样先算括号。步骤：① ' + b + '÷' + c + '＝' + qv2 + '；② ' + a + '×' + qv2 + '＝' + (a*qv2) + '。易错：先算 ' + a + '×' + b + ' 再除，顺序错了——换成括号里是减法就会算错。';
+  } else if(k === 3){                       // a － (b ＋ c)
+    var s3 = b + c;
+    q = a + ' － (' + b + ' ＋ ' + c + ') = ?';
+    ans = a - s3;
+    sol = '思路：减号后面跟着括号，括号里的整体才是要减掉的东西。步骤：① ' + b + '＋' + c + '＝' + s3 + '；② ' + a + '－' + s3 + '＝' + (a-s3) + '。易错：先算 ' + a + '－' + b + ' 再＋' + c + '，把「减一整块」做成了「减一块再加一块」。';
+  } else if(k === 4){                       // a － b ＋ c
+    var m4 = a - b, r4 = m4 + c;
+    q = a + ' － ' + b + ' ＋ ' + c + ' = ?';
+    ans = r4;
+    sol = '思路：没有括号，只有加减，从左往右一步一步走。步骤：① ' + a + '－' + b + '＝' + m4 + '；② ' + m4 + '＋' + c + '＝' + r4 + '。易错：先算 ' + b + '＋' + c + ' 再减，等于自己加了括号。';
+  } else if(k === 5){                       // a × b － c
+    var p5 = a * b, r5 = p5 - c;
+    q = a + ' × ' + b + ' － ' + c + ' = ?';
+    ans = r5;
+    sol = '思路：先乘后减，乘法那一块先算完整。步骤：① ' + a + '×' + b + '＝' + p5 + '；② ' + p5 + '－' + c + '＝' + r5 + '。易错：算完乘法就收笔——两步题最常见的就是停在第一步。';
+  } else {                                  // a × b ＋ c
+    var p6 = a * b, r6 = p6 + c;
+    q = a + ' × ' + b + ' ＋ ' + c + ' = ?';
+    ans = r6;
+    sol = '思路：先乘后加。步骤：① ' + a + '×' + b + '＝' + p6 + '；② ' + p6 + '＋' + c + '＝' + r6 + '。易错：把 ' + b + '＋' + c + ' 先加，再去乘 ' + a + '，顺序反了。';
+  }
+  return {t:'n', q:q, ans:ans, sol:sol, _meta:meta, _pool:'M'};
+}
+function genMix(){
+  var k = 1 + Math.floor(R()*6), g = 0;
+  if(k === 1){
+    var s = 30 + Math.floor(R()*70), c = 0;
+    while(g++ < 60){
+      for(var d=3; d<=9; d++){ if(s % d === 0){ c = d; break; } }
+      if(c) break;
+      s++;
+    }
+    if(!c){ s = 36; c = 6; }
+    var a1 = 18 + Math.floor(R()*(s-24));
+    if(a1 > 96){ a1 = 96; }
+    return mixQ(1, a1, s - a1, c);
+  }
+  if(k === 2){
+    var c2 = 3 + Math.floor(R()*7);
+    var qv2 = 4 + Math.floor(R()*6);          // 商 4..9
+    var a2 = 3 + Math.floor(R()*7);
+    return mixQ(2, a2, c2*qv2, c2);
+  }
+  if(k === 3){
+    var a3 = 420 + Math.floor(R()*470);       // 420..889
+    var b3 = 120 + Math.floor(R()*220);       // 120..339
+    var c3 = 100 + Math.floor(R()*230);       // 100..329
+    if(b3 + c3 > a3 - 40){ c3 = Math.max(100, a3 - 40 - b3); }
+    return mixQ(3, a3, b3, c3);
+  }
+  if(k === 4){
+    var a4 = 520 + Math.floor(R()*380);       // 520..899
+    var b4 = 180 + Math.floor(R()*260);       // 180..439
+    var c4 = 110 + Math.floor(R()*240);       // 110..349
+    if(a4 - b4 < 60){ b4 = a4 - 60 - Math.floor(R()*80); if(b4 < 120) b4 = 120; }
+    return mixQ(4, a4, b4, c4);
+  }
+  var big = (11 + Math.floor(R()*38)) * 10 + (5 + Math.floor(R()*5));   // 三位数，个位 5..9：必进位
+  var mb = 3 + Math.floor(R()*7);
+  var cc = 20 + Math.floor(R()*70);
+  return mixQ(k, big, mb, cc);
+}
+function fromMeta(mt){
+  if(mt.g==='K') return koujueQ(mt.a, mt.b);
+  if(mt.g==='M') return mixQ(mt.k, mt.a, mt.b, mt.c);
+  if(mt.g==='C'){
+    var ones = mt.r*mt.d, c = Math.floor(ones/10), tens = mt.m*mt.d;
+    var num = mt.m*10 + mt.r;
+    return {t:'n', q:'算 '+num+'×'+mt.d+'，十位是 '+tens+' 加个位进的 '+c+'，得（　）个十', ans:tens+c,
+      sol:'思路：乘积＋进位。步骤：个位 '+mt.r+'×'+mt.d+'='+ones+'，进 '+c+'；十位 '+mt.m+'×'+mt.d+'='+tens+'，'+tens+'+'+c+'='+(tens+c)+'。',
+      _meta:mt, _pool:'C'};
+  }
+  if(mt.g==='V') return genVertFrom(mt.n, mt.d);
+  var b = PLANBANK[mt.g][mt.i];
+  return {t:b.t, q:b.q, opts:b.opts, ans:b.ans, sol:b.sol, _meta:mt, _pool:mt.g};
+}
+
+function nextDay(){
+  for(var i=0;i<PLAN.length;i++){
+    var r = save.days[i];
+    if(!r || !r.done) return i;
+  }
+  return -1;
+}
+/* 复习的“天”用日历天序号（daySeq），不用计划内第几天——
+   计划只有 7 天，+7 的第三轮在计划内永远排不上；日历天则跨练手/计划都成立。 */
+function tickDay(){
+  var t = todayKey();
+  if(save.dayKey !== t){
+    save.dayKey = t;
+    save.daySeq = (save.daySeq || 0) + 1;
+    persist();
+  }
+}
+function slotNow(){ return save.daySeq || 0; }
+function addReview(q){
+  if(!q || !q._meta) return;
+  var key = JSON.stringify(q._meta);
+  for(var i=0;i<save.box.length;i++){
+    if(JSON.stringify(save.box[i].m)===key){
+      save.box[i].lvl = 1; save.box[i].due = slotNow()+GAPS[0]; persist(); return;
+    }
+  }
+  save.box.push({m:q._meta, lvl:1, due:slotNow()+GAPS[0]});
+  if(save.box.length>30) save.box.shift();
+  persist();
+}
+/* 同类再练：错题回来时，不再原样重出，而是换一组数字出「同类新题」。
+   理由：原样重出测的是记忆，换数字重出测的是动作有没有真的改过来；
+   固定池里的概念题（算理/判断/拆解/批改）没有「换数字」的版本，只能原题重现。 */
+function sameTypeNew(mt){
+  if(!mt) return null;
+  if(mt.g==='K') return genKoujue();
+  if(mt.g==='C') return genChain();
+  if(mt.g==='V') return genVert(true);
+  if(mt.g==='M') return genMix();
+  return null;
+}
+/* 新一局开始：局号 +1，并把之前弃局没答完的占用宠物归还队列。
+   必须在 takeReview 之前调用（startDay / buildLevel 的开头）。 */
+function beginRun(){
+  save.runSeq = (save.runSeq || 0) + 1;
+  save.box.forEach(function(b){
+    if(b._taken != null && b._taken !== save.runSeq) delete b._taken;
+  });
+}
+function takeReview(){
+  for(var i=0;i<save.box.length;i++){
+    var b = save.box[i];
+    if(b.due <= slotNow() && !b._taken){
+      b._taken = save.runSeq || 1;  // 标记占用：本局内待作答
+      var q = sameTypeNew(b.m), fresh = !!q;
+      if(!q) q = fromMeta(b.m);
+      q._review = {lvl: b.lvl, fresh: fresh, itemRef: b};
+      return q;
+    }
+  }
+  return null;
+}
+/* 1-3-7 复习阶梯的状态机：
+   item.lvl = 即将进行的第几轮（1~3）。答对 → 下一轮隔 GAPS[lvl] 天回来；
+   第 3 轮也答对 → 毕业（不打回队列，宠物在 answer() 里真正归队）；
+   任何一轮答错 → 打回第 1 轮，隔 1 天回来。
+   占用中的条目在作答（gradeReview）时才真正出队；中途弃局的占用会在下一次 loadRun 归还。 */
+function gradeReview(q, ok){
+  if(!q || !q._review || !q._meta) return;
+  var it = q._review.itemRef;
+  var i = it ? save.box.indexOf(it) : -1;
+  if(i >= 0) save.box.splice(i, 1);   // 作答完毕，正式出队
+  if(!ok){
+    save.box.push({m:q._meta, lvl:1, due:slotNow()+GAPS[0]});
+    persist();
+    return;
+  }
+  var lvl = q._review.lvl + 1;
+  if(lvl > GAPS.length){
+    q._review.graduated = true;   // 三轮全过，宠物归队
+    persist();
+    return;
+  }
+  save.box.push({m:q._meta, lvl:lvl, due:slotNow()+GAPS[lvl-1]});
+  persist();
+}
+/* 固定题库：洗牌后按顺序发牌（bag）。一轮之内绝不重复，发完了再洗一轮 */
+function pickBank(tag){
+  if(!save.used) save.used = {};
+  var pool = PLANBANK[tag];
+  var st = save.used[tag];
+  if(!st || !st.bag || !st.bag.length){
+    var bag = [];
+    for(var i=0;i<pool.length;i++) bag.push(i);
+    shuffleR(bag);
+    st = save.used[tag] = {bag:bag};
+  }
+  var idx = st.bag.pop();
+  persist();
+  var b = pool[idx];
+  return {t:b.t, q:b.q, opts:(b.opts ? b.opts.slice() : undefined), ans:b.ans, sol:b.sol, _meta:{g:tag,i:idx}, _pool:tag};
+}
+function buildDayQuestions(di){
+  var plan = PLAN[di];
+  if(!plan) return [];
+  var tags = [];
+  plan.mix.forEach(function(m){ for(var i=0;i<m[1];i++) tags.push(m[0]); });
+  // 打散，避免同类型连着出现
+  shuffleR(tags);
+  var qs = [], seen = [];
+  tags.forEach(function(tag){
+    var q = null, guard = 0;
+    while(guard++ < 5){
+      var cand = (tag==='K') ? genKoujue() : (tag==='C') ? genChain() :
+                 (tag==='V') ? genVert(di>=2) : (tag==='M') ? genMix() : pickBank(tag);
+      if(cand && seen.indexOf(cand.q) < 0){ q = cand; break; }
+    }
+    if(q){ seen.push(q.q); qs.push(q); }
+  });
+  // 走丢的宠物：最多补 2 只，放在最后
+  for(var r=0;r<2;r++){
+    var rv = takeReview();
+    if(rv && seen.indexOf(rv.q)<0){ seen.push(rv.q); qs.push(rv); }
+  }
+  return qs;
+}
+function startDay(i){
+  if(i<0 || i>=PLAN.length) return;
+  tickDay();                        // 记录日历天：1-3-7 阶梯按自然日推进
+  beginRun();                       // 归还弃局占用，再取本局要救的宠物
+  seedRnd(todayKey() + '#D' + i);   // 同一天重打 = 同一套题
+  var qs = buildDayQuestions(i);
+  if(!qs.length) return;
+  G.mode = 'plan'; G.day = i; G.li = -1;
+  loadRun(qs, 'D'+(i+1)+' · ' + PLAN[i].name, LEVELS[i % 5].theme, i, LEVELS[i % 5].style);
+  hide('mapLayer'); hide('planLayer'); hide('clearLayer'); hide('failLayer');
+  if(!actx){ try{ actx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} }
+}
+function renderPlan(){
+  var g = $('planGrid');
+  g.innerHTML = '';
+  var nd = nextDay();
+  PLAN.forEach(function(p,i){
+    var rec = save.days[i];
+    var st = (rec && rec.done) ? 'done' : (i===nd ? 'today' : (i<nd ? 'past' : 'lock'));
+    var d = document.createElement('div');
+    d.className = 'chip '+st;
+    var stars = (rec && rec.done && rec.stars) ? new Array(rec.stars+1).join('★') : '';
+    d.innerHTML = '<div class="dn">D'+(i+1)+'</div>' +
+                  '<div class="dv">'+((rec && rec.done) ? '✓' : (i===nd ? '▶' : (i+1)))+'</div>' +
+                  '<div class="ds">'+stars+'</div>';
+    if((rec && rec.done) || i===nd){
+      d.onclick = function(){ startDay(i); };
+      d.style.cursor = 'pointer';
+      d.title = p.name;
+    }
+    g.appendChild(d);
+  });
+  var done = 0;
+  save.days.forEach(function(x){ if(x && x.done) done++; });
+  if(nd < 0){
+    $('planSub').textContent = '7 天全部完成，毕业！可以继续自由闯关，或重打任意一天。';
+  } else {
+    $('planSub').textContent = '进度 '+done+'/7 天 · 今日：D'+(nd+1)+' '+PLAN[nd].name+'（每天八类综合，题量 '+
+      PLAN[nd].mix.reduce(function(a,m){return a+m[1];},0)+' 题起）';
+  }
+  var parts = [];
+  Object.keys(save.stats).forEach(function(k){
+    var s = save.stats[k], t = s.c + s.w;
+    if(t>0) parts.push((POOLNAME[k]||k)+' '+Math.round(s.c/t*100)+'%');
+  });
+  var lv = [0,0,0];
+  save.box.forEach(function(b){ if(b.lvl>=1 && b.lvl<=GAPS.length) lv[b.lvl-1]++; });
+  $('planDash').innerHTML = '走丢的宠物 <b>'+save.box.length+'</b> 只（第1轮 '+lv[0]+' · 第2轮 '+lv[1]+' · 第3轮 '+lv[2]+
+    '，按 1-3-7 天回来；三轮全过才归队，任何一轮答错回到第 1 天）。' +
+    (parts.length ? '<br>各类正确率：'+parts.join('　') : '<br>先打一天，这里会出现各类正确率。');
+}
+
+/* ============ 学习分析 ============ */
+var ADVICE = {
+  K:'回手册附录 A：口诀卡再过一轮，先不限时求对，再限时求快。',
+  C:'回手册 3.2「拆链训练」：家长报「35 和 4」，孩子 2 秒内答「39」，当天加练 20 组。',
+  V:'回手册 3.2 竖式口述：让孩子边写边说「乘积，加进位，写几进几」，说对 5 道再收工。',
+  M:'两步题专项：动笔前先写 ①②，做完一步打一个钩；先练 3 天「只看钩有没有打完」，不看得数。',
+  X:'每天当一分钟小老师：从自己的作业里挑一道错题，说出「错在第几步」，说不出就回去重看那一格。',
+  S:'回手册 3.3：用位值卡讲「这一步算的是 8 个十」，讲明白再做题。',
+  P:'回手册 3.4：动笔前先估算，尾数法失效的题必须换估算法检查。',
+  D:'回手册 3.5 四步模板：读两遍 → 画线段图 → 分步写 → 查三样。'
+};
+/* 动作体检：把八个题型归成四条动作，一一对应他这四类错误 */
+var ACTIONS = [
+  {name:'进位动作', keys:['C','V'],   tip:'每一格都先问「乘积加进位了吗」；进位圈划掉再走下一步，没划掉就是没加。'},
+  {name:'两步动作', keys:['M'],       tip:'动笔前先标 ①②，做完一步打一个钩——只走一步，是这次最集中的失分点。'},
+  {name:'读题动作', keys:['K','S','D'], tip:'动笔前读符号、读「一共/还剩/赚」，把关键数字圈出来再列式。'},
+  {name:'自检动作', keys:['X','P'],    tip:'算完先看进位圈，再估算量级；每天当一分钟小老师，挑自己一道错题说错在哪。'}
+];
+function actionHTML(cats){
+  var out = '';
+  ACTIONS.forEach(function(a){
+    var c = 0, w = 0;
+    a.keys.forEach(function(k){ if(cats[k]){ c += cats[k].c; w += cats[k].w; } });
+    if(c + w === 0) return;
+    var p = c / (c + w);
+    out += barHTML(a.name, c, w);
+    if(p < 0.85){
+      out += '<div class="adv">📌 ' + a.name + ' ' + Math.round(p*100) + '%（' + c + '/' + (c+w) + '）。' + a.tip + '</div>';
+    }
+  });
+  return out;
+}
+function accClass(p){ return p >= 0.85 ? '' : (p >= 0.7 ? ' mid' : ' low'); }
+function barHTML(name, c, w){
+  var t = c + w;
+  if(!t) return '';
+  var p = c / t;
+  return '<div class="abar"><span class="an">' + name + '</span>' +
+    '<span class="atr"><span class="af' + accClass(p) + '" style="width:' + Math.round(p*100) + '%"></span></span>' +
+    '<span class="av">' + Math.round(p*100) + '%</span><span style="font-size:10px;color:#7fa3c9">' + c + '/' + t + '</span></div>';
+}
+function adviceHTML(cats){
+  var out = '';
+  Object.keys(cats).forEach(function(k){
+    var s = cats[k], t = s.c + s.w;
+    if(t >= 2 && s.c / t < 0.7 && ADVICE[k]){
+      out += '<div class="adv">📌 ' + (POOLNAME[k]||k) + '正确率 ' + Math.round(s.c/t*100) + '%（' + s.c + '/' + t + '），低于 70%。' + ADVICE[k] + '</div>';
+    }
+  });
+  return out;
+}
+function wrongsHTML(wrongs){
+  if(!wrongs || !wrongs.length) return '<div class="adv" style="border-color:#3ddc97;background:#0f221a;color:#c8ecd9">✔ 这次一题没错，保持这个节奏。</div>';
+  var out = '<div style="font-size:12px;color:#7fa3c9;margin:8px 0 2px">本次做错的题（变成「走丢的宠物」，按 1-3-7 天回来三轮，全过才归队）：</div>';
+  wrongs.forEach(function(x){
+    out += '<div class="wrq"><b>' + x.q + '</b><br>' + x.sol + '</div>';
+  });
+  return out;
+}
+function fmtSecs(s){
+  if(!s || s < 20) return '';
+  return ' · 用时约 ' + Math.max(1, Math.round(s/60)) + ' 分钟';
+}
+function dayAnalysisHTML(rec, title, inner){
+  var html = inner ? '' : '<div class="dayrep"><h4>' + title + '</h4>';
+  var any = false, cats = rec.cats || {};
+  Object.keys(cats).forEach(function(k){ if(cats[k].c + cats[k].w > 0) any = true; });
+  if(!any){
+    html += '<div class="meta">暂无分类记录</div>';
+  } else {
+    Object.keys(cats).forEach(function(k){
+      html += barHTML(POOLNAME[k]||k, cats[k].c, cats[k].w);
+    });
+    html += '<div style="font-size:12px;color:#7fa3c9;margin:10px 0 2px">—— 四条动作体检（按错因归类，比题型更能看出问题在哪）——</div>';
+    html += actionHTML(cats);
+  }
+  html += adviceHTML(cats) + wrongsHTML(rec.wrongs);
+  if(!inner) html += '</div>';
+  return html;
+}
+function renderReport(){
+  var doneDays = [];
+  save.days.forEach(function(r,i){ if(r && r.done) doneDays.push([i,r]); });
+  var totalQ = 0, totalC = 0, totalSecs = 0;
+  doneDays.forEach(function(p){
+    var r = p[1];
+    var t = (r.cats ? Object.keys(r.cats).reduce(function(a,k){ return a + r.cats[k].c + r.cats[k].w; }, 0) : 0);
+    totalQ += t; totalC += (r.cats ? Object.keys(r.cats).reduce(function(a,k){ return a + r.cats[k].c; }, 0) : 0);
+    totalSecs += (r.secs || 0);
+  });
+  $('reportSub').textContent = doneDays.length
+    ? '已完成 ' + doneDays.length + ' 个训练日 · 累计 ' + totalQ + ' 题 · 总正确率 ' + (totalQ ? Math.round(totalC/totalQ*100) : 0) + '% · 累计约 ' + Math.round(totalSecs/60) + ' 分钟'
+    : '还没有训练记录，先完成一个「今日训练」再来.';
+  var html = '';
+  // 总体弱项提示
+  var weakOverall = [];
+  Object.keys(save.stats).forEach(function(k){
+    var s = save.stats[k], t = s.c + s.w;
+    if(t >= 5 && s.c/t < 0.7) weakOverall.push((POOLNAME[k]||k) + ' ' + Math.round(s.c/t*100) + '%');
+  });
+  if(weakOverall.length){
+    html += '<div class="adv">📊 累计看，这几类正确率低于 70%：<b>' + weakOverall.join('、') + '</b>。纸笔训练请向对应手册章节加码，游戏量不要加。</div>';
+  } else if(totalQ >= 20){
+    html += '<div class="adv" style="border-color:#3ddc97;background:#0f221a;color:#c8ecd9">📊 各类正确率都在 70% 以上，当前节奏合适，按计划继续。</div>';
+  }
+  if(!doneDays.length){
+    $('reportBody').innerHTML = html;
+    return;
+  }
+  doneDays.slice().reverse().forEach(function(p){
+    var di = p[0], r = p[1];
+    var stars = r.stars ? new Array(r.stars+1).join('★') : '';
+    html += '<div class="dayrep"><h4>第 ' + (Math.floor(di/7)+1) + ' 周 · D' + (di+1) + '　' + stars + '</h4>' +
+      '<div class="meta">正确率 ' + Math.round((r.acc||0)*100) + '%' + fmtSecs(r.secs) + '</div>' +
+      dayAnalysisHTML(r, '', true);
+    html += '</div>';
+  });
+  $('reportBody').innerHTML = html;
+}
+
+/* ============ 存档 ============ */
+var SAVE_KEY = 'mathgame_v3';
+var save = {unlocked:1, stars:{}, days:[], box:[], stats:{}};
+try{
+  var raw = localStorage.getItem(SAVE_KEY);
+  if(raw){ var o = JSON.parse(raw); if(o && o.unlocked) save = o; }
+  if(!save.days) save.days = [];
+  if(!save.box) save.box = [];
+  if(!save.stats) save.stats = {};
+  if(!save.pets) save.pets = {};          // 宠物图鉴：{族id: {n: 答对数}}
+  /* 1-3-7 阶梯迁移：旧存档的 due 是“计划第几天”，换算成日历天序号。
+     旧 GAPS=[1,2,3,4] 时代 lvl 最高 4，统一压回 3 轮以内；lvl4 视为第 3 轮待过。 */
+  if(save.daySeq == null){
+    var nd = nextDay();
+    save.daySeq = (nd >= 0) ? nd : 7;
+    save.dayKey = todayKey();
+    save.box.forEach(function(b){ if(b.lvl > 3) b.lvl = 3; });
+    persist();
+  }
+}catch(e){}
+function persist(){ try{ localStorage.setItem(SAVE_KEY, JSON.stringify(save)); }catch(e){} }
+
+/* ============ 游戏状态 ============ */
+var G = {
+  li:0, qs:[], idx:0, hp:5, maxHp:5, score:0,
+  correct:0, wrong:0, streak:0,
+  px:0, py:0, vy:0, cam:0, worldLen:0,
+  phase:'idle', // idle | walk | question | attack | clearwalk | clearshow | fail
+  t:0, anim:0, atk:0, shake:0, clearT:0,
+  enemies:[], blocks:[], doorX:0, decors:[], dust:[], bookFx:[], confetti:[],
+  answered:false, pending:null, typed:'', autoT:null,
+  mode:'free', day:-1, slot:0, hLabel:'', theme:null,
+  dayStats:{}, wrongs:[], t0:0,
+  slotIdx:0, gateWait:0, gateHint:false, atGate:false, missFx:null, bonkT:0,
+  dir:0, face:1, moved:false,
+  jumpHold:false, coyote:0, jbuf:0, hitStop:0, parts:[], popFx:null,
+  shield:0, shieldFx:0, evo:null,
+  style:'bubble', portals:[], lanterns:[], boss:null
+};
+// 方向键按住状态：← 后退 / → 前进
+var held = {l:false, r:false};
+
+/* ============ 选项位置打乱 ============
+   正确答案的位置用「牌堆」发：每种选项数各自一副洗好的牌，发完再洗。
+   这样既保证 A/B/C/D 分布均匀（不能靠"选第二个"蒙），顺序又不固定（不能靠位置记）。
+   注意：只改本次运行的副本，不动 LEVELS / PLANBANK 里的原对象。 */
+var optDecks = {};
+function nextOptPos(L){
+  var dk = optDecks[L];
+  if(!dk || !dk.length){
+    dk = [];
+    for(var i=0;i<L;i++) dk.push(i);
+    for(var k=dk.length-1;k>0;k--){
+      var j = Math.floor(Math.random()*(k+1));
+      var t = dk[k]; dk[k] = dk[j]; dk[j] = t;
+    }
+  }
+  optDecks[L] = dk;
+  return dk.pop();
+}
+function prepQ(q){
+  var c = {t:q.t, q:q.q, ans:q.ans, sol:q.sol,
+           _meta:q._meta, _pool:q._pool, _review:q._review};
+  if(q.t === 'c' && q.opts && q.opts.length > 1){
+    var L = q.opts.length, pos = nextOptPos(L);
+    var wrong = [], i;
+    for(i=0;i<L;i++){ if(i !== q.ans) wrong.push(q.opts[i]); }
+    for(i=wrong.length-1;i>0;i--){
+      var j = Math.floor(Math.random()*(i+1));
+      var t = wrong[i]; wrong[i] = wrong[j]; wrong[j] = t;
+    }
+    var out = [], w = 0;
+    for(var p=0;p<L;p++){ out.push(p === pos ? q.opts[q.ans] : wrong[w++]); }
+    c.opts = out; c.ans = pos;
+  } else if(q.opts){
+    c.opts = q.opts.slice();
+  }
+  return c;
+}
+
+function loadRun(qs, label, theme, slot, style){
+  G.qs = qs.map(function(q){
+    var c = prepQ(q);
+    // 练手模式的题没有 _pool，按关卡归属补上，这样答对也能收宠物
+    if(!c._pool && G.mode !== 'plan' && LEVELS[G.li] && LEVELS[G.li].poolTag){
+      c._pool = LEVELS[G.li].poolTag;
+    }
+    return c;
+  });
+  G.idx = 0; G.hp = G.maxHp; G.score = 0; G.correct = 0; G.wrong = 0; G.streak = 0;
+  G.px = 60; G.py = 0; G.vy = 0; G.cam = 0;
+  G.phase = 'walk'; G.atk = 0; G.shake = 0; G.typed = ''; G.clearT = 0;
+  G.hLabel = label;
+  G.theme = theme;
+  // scene/style 标记挂在关卡对象上，这里合并进 theme，绘制层只看 theme
+  if(theme && !theme.scene){
+    for(var li2 = 0; li2 < LEVELS.length; li2++){
+      if(LEVELS[li2].theme === theme){
+        theme.scene = LEVELS[li2].scene;
+        theme.play = LEVELS[li2].play;
+        break;
+      }
+    }
+  }
+  G.style = style || (LEVELS[G.li] && LEVELS[G.li].style) || 'bubble';
+  G.dayStats = {}; G.wrongs = []; G.t0 = Date.now();
+  G.slotIdx = 0; G.gateWait = 0; G.gateHint = false; G.atGate = false; G.missFx = null; G.bonkT = 0;
+  G.dir = 0; G.face = 1; G.moved = false;
+  G.jumpHold = false; G.coyote = 0; G.jbuf = 0; G.hitStop = 0;
+  G.parts = []; G.popFx = null;
+  G.shield = shieldCount(); G.shieldFx = 0; G.evo = null;   // 完全体宠物 → 护盾
+  releaseAll();
+  G.qtagLabel = (G.mode === 'plan') ? '今日训练' : (LEVELS[G.li] ? LEVELS[G.li].qtag : '自由闯关');
+  G.slot = (slot == null) ? Math.max(0, nextDay()) : slot;
+  G.worldLen = 560 + G.qs.length * 280 + 340;
+  G.enemies = []; G.blocks = []; G.bookFx = []; G.confetti = [];
+  G.portals = []; G.lanterns = []; G.boss = null;
+  /* 按关卡玩法生成物件：
+     crystal=全水晶（走碰） · bubble=泡泡/蛋巢交替（跳踩+顶） · lantern=浮空神灯（跳够）
+     gear=全齿轮箱（顶） · boss=前段交替 + 最后 3 题是大 BOSS */
+  var st = G.style;
+  var bossBase = (st === 'boss') ? Math.max(0, G.qs.length - 3) : -1;
+  G.qs.forEach(function(q, k){
+    var x = 460 + k*280;
+    var kind;
+    if(st === 'crystal') kind = 'portal';
+    else if(st === 'lantern') kind = 'lantern';
+    else if(st === 'gear') kind = 'block';
+    else if(st === 'boss') kind = (k >= bossBase) ? 'boss' : (k % 2 === 0 ? 'enemy' : 'block');
+    else kind = (k % 2 === 0 ? 'enemy' : 'block');
+    if(kind === 'enemy') G.enemies.push({x:x, dead:false, squash:0, idx:k});
+    else if(kind === 'block') G.blocks.push({x:x, used:false, bump:0, idx:k});
+    else if(kind === 'portal') G.portals.push({x:x, used:false, idx:k});
+    else if(kind === 'lantern') G.lanterns.push({x:x, used:false, idx:k});
+  });
+  if(st === 'boss' && bossBase >= 0){
+    G.boss = {x: 460 + bossBase*280, base:bossBase, hp:G.qs.length - bossBase,
+              hit:0, hurt:0, dead:false, deadT:0};
+  }
+  G.doorX = G.worldLen - 140;
+  G.decors = [];
+  for(var d=0; d<34; d++){
+    G.decors.push({x: 120 + d*170 + (d*57%80), k: d%4});
+  }
+  G.dust = [];
+  for(var s=0; s<70; s++){
+    G.dust.push({x: Math.random()*V.w, y: 60+Math.random()*460, s: 1+Math.random()*2.5, v: 0.2+Math.random()*0.7});
+  }
+  hide('qcard');
+  updateHUD();
+}
+
+function buildLevel(i){
+  var L = LEVELS[i];
+  G.li = i; G.mode = 'free'; G.day = -1;
+  beginRun();                       // 归还弃局占用，再取本局要救的宠物
+  var qs = L.qs.slice(), seen = [];
+  qs.forEach(function(q){ seen.push(q.q); });
+  // 练手模式也带上到期的走丢宠物（最多 2 只），救援不依赖计划
+  for(var r=0;r<2;r++){
+    var rv = takeReview();
+    if(rv && seen.indexOf(rv.q)<0){ seen.push(rv.q); qs.push(rv); }
+  }
+  loadRun(qs, '第 ' + (i+1) + ' 关 · ' + L.name, L.theme, null, L.style);
+}
+
+function updateHUD(){
+  $('hLevel').textContent = G.hLabel || ('第 ' + (G.li+1) + ' 关');
+  var hearts = '';
+  for(var i=0;i<G.maxHp;i++) hearts += (i<G.hp ? '♥' : '♡');
+  if(G.shield > 0) hearts += '　🛡×' + G.shield;
+  $('hHp').textContent = hearts;
+  $('hScore').textContent = ('000000' + G.score).slice(-6);
+  var done = G.correct + G.wrong;
+  $('hProg').textContent = done + '/' + G.qs.length;
+}
+
+function show(id){ $(id).classList.remove('hide'); }
+function hide(id){ $(id).classList.add('hide'); }
+
+/* ============ 绘制 ============ */
+function drawSprite(rows, x, y, px, pal){
+  for(var r=0;r<rows.length;r++){
+    var row = rows[r];
+    for(var c=0;c<row.length;c++){
+      var ch = row.charAt(c);
+      if(ch === '.' || ch === ' ') continue;
+      var col = pal[ch];
+      if(!col) continue;
+      ctx.fillStyle = col;
+      ctx.fillRect(Math.round(x + c*px), Math.round(y + r*px), px, px);
+    }
+  }
+}
+
+/* ---- 关卡场景 · 每关一套专属像素背景 ---- */
+function drawBG(th, cam){
+  var scene = (th && th.scene) || 'cave';
+  if(scene === 'volcano') bgVolcano(th, cam);
+  else if(scene === 'temple') bgTemple(th, cam);
+  else if(scene === 'workshop') bgWorkshop(th, cam);
+  else if(scene === 'castle') bgCastle(th, cam);
+  else bgCave(th, cam);
+}
+// 通用：飘浮微粒（每关不同颜色/方向）
+function drawDustFx(cam, col, rise){
+  for(var d=0; d<G.dust.length; d++){
+    var p = G.dust[d];
+    var dx = (p.x - cam*0.6) % V.w;
+    if(dx < 0) dx += V.w;
+    var dy = rise ? (p.y - (G.t*p.v*1.4 + d*37)%420) : (p.y + Math.sin(G.t/40 + d)*6);
+    if(dy < 20) dy += 440;
+    ctx.globalAlpha = 0.28 + Math.sin(G.t/23 + d*3)*0.16;
+    ctx.fillStyle = col;
+    ctx.fillRect(dx, dy, p.s, p.s);
+  }
+  ctx.globalAlpha = 1;
+}
+// 倒三角钟乳石
+function stalactite(x, len, w, col){
+  ctx.fillStyle = col;
+  for(var i=0;i<len;i+=7){
+    var ww = Math.max(4, w - i*0.8);
+    ctx.fillRect(x - ww/2, 52 + i, ww, 7);
+  }
+}
+// 发光水晶簇
+function crystalCluster(x, size, col, glow){
+  ctx.fillStyle = col;
+  ctx.fillRect(x, GROUND-14-size, 8, size);
+  ctx.fillRect(x+8, GROUND-10-size*0.66, 6, size*0.66);
+  ctx.fillRect(x-7, GROUND-8-size*0.45, 6, size*0.45);
+  ctx.fillStyle = glow;
+  ctx.fillRect(x+2, GROUND-12-size, 3, size-4);
+  ctx.fillRect(x+9, GROUND-8-size*0.5, 2, size*0.4);
+}
+// 旋转齿轮
+function drawGear(x, y, r, teeth, ang, col){
+  ctx.fillStyle = col;
+  for(var i=0;i<teeth;i++){
+    var a = ang + i*Math.PI*2/teeth;
+    ctx.fillRect(x + Math.cos(a)*(r+4) - 5, y + Math.sin(a)*(r+4) - 5, 10, 10);
+  }
+  ctx.fillRect(x-r, y-r*0.62, r*2, r*1.24);
+  ctx.fillRect(x-r*0.62, y-r, r*1.24, r*2);
+  ctx.fillStyle = 'rgba(0,0,0,.3)';
+  ctx.fillRect(x-7, y-7, 14, 14);
+  ctx.fillStyle = col;
+  ctx.fillRect(x-4, y-4, 8, 8);
+}
+// 火把火焰
+function torchFlame(x, y, s){
+  var fl = Math.sin(G.t/6 + x)*2;
+  ctx.fillStyle = '#ff8a3d';
+  ctx.fillRect(x-2, y-6*s-fl, 5*s, 6*s);
+  ctx.fillStyle = '#ffd166';
+  ctx.fillRect(x-1, y-4*s-fl*0.6, 3*s, 4*s);
+  ctx.fillStyle = 'rgba(255,180,80,.14)';
+  ctx.fillRect(x-16, y-20*s, 34, 22*s);
+}
+/* ---- 场景 1：水晶洞窟（口诀洞窟）---- */
+function bgCave(th, cam){
+  var g = ctx.createLinearGradient(0,0,0,GROUND);
+  g.addColorStop(0,'#0a1226'); g.addColorStop(0.55,'#122a52'); g.addColorStop(1,'#1a3f66');
+  ctx.fillStyle = g; ctx.fillRect(0,0,V.w,GROUND+4);
+  // 洞窟顶
+  ctx.fillStyle = '#05091a'; ctx.fillRect(0,0,V.w,52);
+  var toff = cam*0.2 % 160;
+  for(var ti=-1; ti<10; ti++){
+    stalactite(ti*160 - toff + 40, 34 + (ti*53)%38, 26, '#182c52');
+    stalactite(ti*160 - toff + 108, 20 + (ti*29)%30, 18, '#12233f');
+  }
+  // 远景岩壁（视差 0.12）
+  var foff = cam*0.12;
+  ctx.fillStyle = '#0f2444';
+  for(var fi=0; fi<6; fi++){
+    var fx = ((fi*300 - foff) % (V.w+300) + V.w+300) % (V.w+300) - 150;
+    ctx.fillRect(fx, GROUND-150-(fi*37)%60, 90, 150+(fi*37)%60);
+    ctx.fillRect(fx+100, GROUND-100-(fi*53)%40, 70, 100+(fi*53)%40);
+  }
+  // 中景发光水晶（视差 0.4）
+  var moff = cam*0.4;
+  for(var mi=0; mi<7; mi++){
+    var mx = ((mi*260 - moff) % (V.w+260) + V.w+260) % (V.w+260) - 130;
+    var pulse = 0.55 + Math.sin(G.t/26 + mi)*0.3;
+    ctx.globalAlpha = pulse;
+    crystalCluster(mx, 40+(mi*31)%30, th.accent, '#bfefff');
+    ctx.globalAlpha = 1;
+  }
+  // 萤光尘
+  drawDustFx(cam, '#8fd8ff', true);
+  // 地面：石板
+  ctx.fillStyle = '#2b3f60'; ctx.fillRect(0, GROUND, V.w, V.h-GROUND);
+  ctx.fillStyle = '#3a5378'; ctx.fillRect(0, GROUND, V.w, 6);
+  var tile = 84, toff2 = cam % tile;
+  ctx.fillStyle = '#22344f';
+  for(var tx=-tile; tx<V.w+tile; tx+=tile){
+    ctx.fillRect(tx - toff2, GROUND+6, 3, V.h-GROUND);
+    ctx.fillRect(tx - toff2, GROUND+48, V.w, 3);
+  }
+  ctx.fillStyle = '#1b2a42'; ctx.fillRect(0, GROUND+92, V.w, V.h-GROUND-92);
+  // 石缝里的萤光苔
+  for(var gi=0; gi<18; gi++){
+    var gx = ((gi*230 - cam) % (V.w+230) + V.w+230) % (V.w+230) - 60;
+    ctx.globalAlpha = 0.5 + Math.sin(G.t/30 + gi)*0.3;
+    ctx.fillStyle = '#3ddc97';
+    ctx.fillRect(gx, GROUND+62, 5, 3); ctx.fillRect(gx+7, GROUND+70, 4, 3);
+    ctx.globalAlpha = 1;
+  }
+}
+/* ---- 场景 2：火山熔炉（进位熔炉）---- */
+function bgVolcano(th, cam){
+  var g = ctx.createLinearGradient(0,0,0,GROUND);
+  g.addColorStop(0,'#1c0608'); g.addColorStop(0.5,'#4a1408'); g.addColorStop(1,'#7a2a12');
+  ctx.fillStyle = g; ctx.fillRect(0,0,V.w,GROUND+4);
+  // 火山剪影（视差 0.1）+ 火口辉光
+  var foff = cam*0.1;
+  ctx.fillStyle = '#2a0a08';
+  var vx = 300 - (foff%900), vy = GROUND-40;
+  ctx.fillRect(vx-260, vy-210, 520, 210);
+  ctx.fillRect(vx-340, vy-90, 680, 90);
+  var flick = 0.6 + Math.sin(G.t/9)*0.35;
+  ctx.globalAlpha = flick;
+  ctx.fillStyle = '#ff8a3d';
+  ctx.fillRect(vx-60, vy-218, 120, 16);
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = 'rgba(255,138,61,.12)';
+  ctx.fillRect(vx-100, vy-260, 200, 40);
+  // 远处第二座小火山
+  var vx2 = vx + 700 > V.w+200 ? vx - 200 : vx + 700;
+  ctx.fillStyle = '#33100a';
+  ctx.fillRect(vx2-130, vy-120, 260, 120);
+  ctx.globalAlpha = flick*0.7; ctx.fillStyle = '#ff6b35';
+  ctx.fillRect(vx2-30, vy-130, 60, 10); ctx.globalAlpha = 1;
+  // 中景岩柱（视差 0.4）
+  var moff = cam*0.4;
+  for(var mi=0; mi<6; mi++){
+    var mx = ((mi*300 - moff) % (V.w+300) + V.w+300) % (V.w+300) - 150;
+    ctx.fillStyle = '#3a1a12';
+    ctx.fillRect(mx, GROUND-120-(mi*41)%50, 46, 120+(mi*41)%50);
+    ctx.fillStyle = '#4a2418';
+    ctx.fillRect(mx+6, GROUND-114, 10, 100);
+  }
+  // 上升的火星
+  drawDustFx(cam, '#ff9d5c', true);
+  // 地面：黑色玄武岩 + 熔岩裂缝
+  ctx.fillStyle = '#2e1610'; ctx.fillRect(0, GROUND, V.w, V.h-GROUND);
+  ctx.fillStyle = '#45241a'; ctx.fillRect(0, GROUND, V.w, 6);
+  var crack = 0.45 + Math.sin(G.t/14)*0.3;
+  ctx.globalAlpha = crack;
+  var coff = cam % 170;
+  ctx.fillStyle = '#ff8a3d';
+  for(var ci=-1; ci<10; ci++){
+    var cx2 = ci*170 - coff;
+    ctx.fillRect(cx2, GROUND+34, 46, 5);
+    ctx.fillRect(cx2+52, GROUND+60, 60, 5);
+    ctx.fillRect(cx2+20, GROUND+86, 40, 5);
+  }
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = '#1e0c08'; ctx.fillRect(0, GROUND+92, V.w, V.h-GROUND-92);
+}
+/* ---- 场景 3：沙漠神殿（算理神殿）---- */
+function bgTemple(th, cam){
+  var g = ctx.createLinearGradient(0,0,0,GROUND);
+  g.addColorStop(0,'#07222a'); g.addColorStop(0.55,'#0d4552'); g.addColorStop(1,'#156052');
+  ctx.fillStyle = g; ctx.fillRect(0,0,V.w,GROUND+4);
+  // 低垂的大月亮
+  var mx = 1020 - (cam*0.02)%160;
+  ctx.fillStyle = 'rgba(255,236,190,.16)'; ctx.fillRect(mx-90, 90, 180, 180);
+  ctx.fillStyle = '#f5e6b8'; ctx.fillRect(mx-52, 128, 104, 104);
+  ctx.fillStyle = '#e8d49a'; ctx.fillRect(mx-36, 150, 22, 22); ctx.fillRect(mx+8, 176, 30, 18);
+  // 金字塔群（视差 0.12）
+  var foff = cam*0.12;
+  for(var fi=0; fi<5; fi++){
+    var fx = ((fi*380 - foff) % (V.w+380) + V.w+380) % (V.w+380) - 190;
+    var fh = 120 + (fi*43)%70, fw = fh*1.7;
+    ctx.fillStyle = '#0a2c34';
+    for(var s2=0; s2<6; s2++){
+      var sw = fw * (1 - s2/6);
+      ctx.fillRect(fx + (fw-sw)/2, GROUND - fh + s2*(fh/6), sw, fh/6 + 2);
+    }
+  }
+  // 中景石柱 + 火把（视差 0.4）
+  var moff = cam*0.4;
+  for(var mi=0; mi<5; mi++){
+    var mx2 = ((mi*330 - moff) % (V.w+330) + V.w+330) % (V.w+330) - 160;
+    ctx.fillStyle = '#1a4a4a';
+    ctx.fillRect(mx2, GROUND-140, 34, 140);
+    ctx.fillStyle = '#22606b';
+    ctx.fillRect(mx2+4, GROUND-136, 6, 132); ctx.fillRect(mx2+24, GROUND-136, 6, 132);
+    ctx.fillStyle = '#123636';
+    ctx.fillRect(mx2-8, GROUND-150, 50, 14);
+    torchFlame(mx2+17, GROUND-150, 1.2);
+  }
+  // 沙丘尘
+  drawDustFx(cam, '#ffe9b0', false);
+  // 地面：沙岩石砖
+  ctx.fillStyle = '#8a6c42'; ctx.fillRect(0, GROUND, V.w, V.h-GROUND);
+  ctx.fillStyle = '#a5824f'; ctx.fillRect(0, GROUND, V.w, 6);
+  var bt = 96, boff2 = cam % bt;
+  ctx.fillStyle = '#75592f';
+  for(var bx3=-bt; bx3<V.w+bt; bx3+=bt){
+    ctx.fillRect(bx3 - boff2, GROUND+6, 3, V.h-GROUND);
+    ctx.fillRect(bx3 - boff2 + bt/2, GROUND+6, 3, 44);
+    ctx.fillRect(bx3 - boff2, GROUND+50, 3, V.h-GROUND);
+    ctx.fillRect(bx3 - boff2, GROUND+50, V.w, 3);
+  }
+  // 象形符号刻痕
+  ctx.fillStyle = 'rgba(60,42,20,.55)';
+  for(var hi=0; hi<14; hi++){
+    var hx = ((hi*210 - cam) % (V.w+210) + V.w+210) % (V.w+210) - 60;
+    var hk = hi % 3;
+    if(hk === 0){ ctx.fillRect(hx, GROUND+66, 4, 4); ctx.fillRect(hx+6, GROUND+66, 4, 4); ctx.fillRect(hx+3, GROUND+72, 4, 4); }
+    else if(hk === 1){ ctx.fillRect(hx, GROUND+70, 14, 3); ctx.fillRect(hx+5, GROUND+64, 3, 14); }
+    else { ctx.fillRect(hx, GROUND+66, 3, 10); ctx.fillRect(hx+5, GROUND+69, 8, 3); }
+  }
+}
+/* ---- 场景 4：机械工坊（检查工坊）---- */
+function bgWorkshop(th, cam){
+  var g = ctx.createLinearGradient(0,0,0,GROUND);
+  g.addColorStop(0,'#1c1408'); g.addColorStop(0.6,'#3d2a10'); g.addColorStop(1,'#4a3418');
+  ctx.fillStyle = g; ctx.fillRect(0,0,V.w,GROUND+4);
+  // 吊灯（视差 0.15）+ 光锥
+  var loff = cam*0.15;
+  for(var li=0; li<5; li++){
+    var lx = ((li*330 - loff) % (V.w+330) + V.w+330) % (V.w+330) - 160;
+    ctx.fillStyle = '#2a1d0c'; ctx.fillRect(lx-2, 0, 4, 60);
+    ctx.fillStyle = '#c9a227'; ctx.fillRect(lx-14, 60, 28, 10);
+    ctx.fillStyle = 'rgba(255,220,140,.07)';
+    ctx.fillRect(lx-46, 70, 92, 300);
+    ctx.fillStyle = 'rgba(255,220,140,.5)';
+    ctx.fillRect(lx-8, 66, 16, 5);
+  }
+  // 远景货架剪影（视差 0.12）
+  var foff = cam*0.12;
+  for(var fi=0; fi<5; fi++){
+    var fx = ((fi*360 - foff) % (V.w+360) + V.w+360) % (V.w+360) - 180;
+    ctx.fillStyle = '#2a1d0c';
+    ctx.fillRect(fx, GROUND-170, 150, 170);
+    for(var sh=0; sh<3; sh++){
+      ctx.fillStyle = '#352510';
+      ctx.fillRect(fx+8, GROUND-160+sh*52, 134, 8);
+      ctx.fillStyle = '#241809';
+      ctx.fillRect(fx+16+((fi*17+sh*31)%70), GROUND-146+sh*52, 26, 14);
+      ctx.fillRect(fx+60+((fi*23+sh*13)%50), GROUND-142+sh*52, 18, 10);
+    }
+  }
+  // 中景大齿轮（视差 0.4，两两咬合反向转）
+  var moff = cam*0.4;
+  for(var mi=0; mi<4; mi++){
+    var gx2 = ((mi*340 - moff) % (V.w+340) + V.w+340) % (V.w+340) - 170;
+    var gr = 44 + (mi*29)%26;
+    var gy = GROUND - gr - 30;
+    var dir = mi % 2 ? 1 : -1;
+    drawGear(gx2, gy, gr, 8, G.t/34*dir + mi, mi%2 ? '#5a4326' : '#6d5433');
+  }
+  // 蒸汽小颗粒
+  drawDustFx(cam, 'rgba(230,220,200,.5)', true);
+  // 地面：木板
+  ctx.fillStyle = '#5a3d22'; ctx.fillRect(0, GROUND, V.w, V.h-GROUND);
+  ctx.fillStyle = '#6d4c2c'; ctx.fillRect(0, GROUND, V.w, 6);
+  var pt = 120, poff = cam % pt;
+  ctx.fillStyle = '#4a321c';
+  for(var px3=-pt; px3<V.w+pt; px3+=pt){
+    ctx.fillRect(px3 - poff, GROUND+6, 3, V.h-GROUND);
+    ctx.fillRect(px3 - poff, GROUND+46, 3, V.h-GROUND);
+    ctx.fillRect(px3 - poff, GROUND+44, pt, 3);
+  }
+  ctx.fillStyle = '#3a2815'; ctx.fillRect(0, GROUND+92, V.w, V.h-GROUND-92);
+  // 地上的螺栓点缀
+  ctx.fillStyle = '#75592f';
+  for(var bi=0; bi<16; bi++){
+    var bx4 = ((bi*180 - cam) % (V.w+180) + V.w+180) % (V.w+180) - 50;
+    ctx.fillRect(bx4, GROUND+64, 6, 6);
+  }
+}
+/* ---- 场景 5：夜晚城堡（终局城堡）---- */
+function bgCastle(th, cam){
+  var g = ctx.createLinearGradient(0,0,0,GROUND);
+  g.addColorStop(0,'#0a0618'); g.addColorStop(0.55,'#160a24'); g.addColorStop(1,'#2e1250');
+  ctx.fillStyle = g; ctx.fillRect(0,0,V.w,GROUND+4);
+  // 星空（固定伪随机星点，缓慢闪烁）
+  for(var si2=0; si2<40; si2++){
+    var sx3 = (si2*173 + si2*si2*31) % V.w;
+    var sy3 = (si2*97) % 300 + 12;
+    var tw = 0.4 + 0.6*Math.abs(Math.sin(G.t/50 + si2*1.7));
+    ctx.globalAlpha = tw * 0.9;
+    ctx.fillStyle = si2%7 === 0 ? '#ffd166' : '#cfe0ff';
+    ctx.fillRect(sx3, sy3, 2, 2);
+  }
+  ctx.globalAlpha = 1;
+  // 月亮
+  var mox = 1060 - (cam*0.02)%120;
+  ctx.fillStyle = 'rgba(230,220,255,.15)'; ctx.fillRect(mox-70, 70, 140, 140);
+  ctx.fillStyle = '#e8e2f5'; ctx.fillRect(mox-40, 100, 80, 80);
+  ctx.fillStyle = '#c8bfe0'; ctx.fillRect(mox-24, 116, 20, 20); ctx.fillRect(mox+6, 138, 26, 14);
+  // 城堡塔楼剪影（视差 0.12）+ 亮窗
+  var foff = cam*0.12;
+  for(var fi=0; fi<5; fi++){
+    var fx2 = ((fi*330 - foff) % (V.w+330) + V.w+330) % (V.w+330) - 160;
+    var fh2 = 180 + (fi*47)%80;
+    ctx.fillStyle = '#1e0f36';
+    ctx.fillRect(fx2, GROUND-fh2, 110, fh2);
+    // 城齿
+    for(var m2=0; m2<3; m2++){ ctx.fillRect(fx2 + m2*40, GROUND-fh2-16, 24, 16); }
+    // 塔尖旗
+    ctx.fillStyle = '#1e0f36'; ctx.fillRect(fx2+52, GROUND-fh2-52, 4, 38);
+    ctx.fillStyle = '#ff4d6d'; ctx.fillRect(fx2+56, GROUND-fh2-50, 22+Math.sin(G.t/17+fi)*3, 12);
+    // 亮窗
+    for(var wr=0; wr<3; wr++){
+      var lit = ((wr*11 + fi*7 + Math.floor(fx2)) % 10) < 4;
+      ctx.fillStyle = lit ? 'rgba(255,196,90,.85)' : 'rgba(30,15,54,.9)';
+      ctx.fillRect(fx2+30, GROUND-fh2+30+wr*44, 18, 26);
+    }
+  }
+  // 中景枯树 + 火把柱（视差 0.4）
+  var moff2 = cam*0.4;
+  for(var mi2=0; mi2<6; mi2++){
+    var mx3 = ((mi2*290 - moff2) % (V.w+290) + V.w+290) % (V.w+290) - 140;
+    if(mi2 % 2 === 0){
+      ctx.fillStyle = '#140a26';
+      ctx.fillRect(mx3, GROUND-90, 8, 90);
+      ctx.fillRect(mx3-16, GROUND-70, 18, 6); ctx.fillRect(mx3+8, GROUND-84, 16, 6);
+      ctx.fillRect(mx3-10, GROUND-56, 12, 5);
+    } else {
+      ctx.fillStyle = '#241540';
+      ctx.fillRect(mx3, GROUND-110, 10, 110);
+      ctx.fillStyle = '#3a2a5c'; ctx.fillRect(mx3-4, GROUND-118, 18, 8);
+      torchFlame(mx3+5, GROUND-118, 1.4);
+    }
+  }
+  // 夜雾
+  drawDustFx(cam, 'rgba(180,160,230,.4)', false);
+  // 地面：城堡石砖
+  ctx.fillStyle = '#241a38'; ctx.fillRect(0, GROUND, V.w, V.h-GROUND);
+  ctx.fillStyle = '#3a2a5c'; ctx.fillRect(0, GROUND, V.w, 6);
+  var ct = 90, coff2 = cam % ct;
+  ctx.fillStyle = '#1a122c';
+  for(var cx3=-ct; cx3<V.w+ct; cx3+=ct){
+    ctx.fillRect(cx3 - coff2, GROUND+6, 3, V.h-GROUND);
+    ctx.fillRect(cx3 - coff2 + ct/2, GROUND+6, 3, 44);
+    ctx.fillRect(cx3 - coff2, GROUND+50, 3, V.h-GROUND);
+    ctx.fillRect(cx3 - coff2, GROUND+50, V.w, 3);
+  }
+  ctx.fillStyle = '#120b20'; ctx.fillRect(0, GROUND+92, V.w, V.h-GROUND-92);
+}
+
+function drawEnemy(e, th, cam){
+  if(e.dead) return;
+  var x = e.x - cam;
+  if(x < -80 || x > V.w + 80) return;
+  var awake = (e.idx === G.slotIdx);
+  var fam = G.qs[e.idx] ? (petFam(G.qs[e.idx]._pool) || PETDEX[0]) : PETDEX[0];
+  var popT = e.squashed ? (e.sqT || 0) : 0;
+  if(e.squashed){
+    // 泡泡破掉后飘走的碎片：解救成功
+    if(popT > 44) return;
+    var fa = Math.max(0, 1 - popT/44);
+    var rise = popT * 1.6;
+    ctx.globalAlpha = fa;
+    ctx.fillStyle = awake ? '#9fd8ff' : '#8fa3b8';
+    ctx.fillRect(x+2, GROUND-30-rise, 10, 4);
+    ctx.fillRect(x+40, GROUND-24-rise, 8, 4);
+    ctx.fillRect(x+18, GROUND-18-rise, 6, 4);
+    // 解救出来的小宠物蹦一下
+    var fy = GROUND - 34 - Math.max(0, 20 - popT*1.4);
+    drawSprite(fam.rows, x+4, fy, 3, fam.pal);
+    ctx.globalAlpha = 1;
+    return;
+  }
+  var pal = awake
+    ? {o: th.accent || '#5ee7ff', d:'rgba(0,0,0,.28)'}
+    : {o:'#3a4456'};
+  var bob = Math.sin((G.t/14) + e.x) * (awake ? 4 : 1.5);
+  var y = GROUND - 44 + bob;
+  ctx.fillStyle = 'rgba(0,0,0,.3)';
+  ctx.fillRect(x+6, GROUND-4, 40, 5);
+  // 泡泡壳
+  drawSprite(BUBBLE, x, y, 4, {o:pal.o});
+  // 泡泡里的小宠物：醒着的彩色，睡着的灰色剪影
+  drawSprite(fam.rows, x+16, y+12, 2, awake ? fam.pal : grayPal(fam.pal));
+  if(awake){
+    // 醒着：黄色感叹号提示「下一个该救它」
+    var ab = Math.sin(G.t/12)*3;
+    ctx.fillStyle = '#ffd166';
+    ctx.fillRect(x+24, y-20+ab, 5, 11);
+    ctx.fillRect(x+24, y-6+ab, 5, 5);
+  } else {
+    // 睡着：Z 字气泡
+    var zb = Math.sin(G.t/30)*2;
+    ctx.fillStyle = 'rgba(255,255,255,.55)';
+    ctx.font = 'bold 13px "Courier New", monospace';
+    ctx.fillText('z', x+38, y-16+zb);
+  }
+}
+
+function drawBlock(b, th, cam){
+  var x = b.x - cam;
+  if(x < -80 || x > V.w + 80) return;
+  var by = GROUND - 178 - (b.bump > 0 ? Math.sin(b.bump/4*Math.PI)*10 : 0);
+  var used = b.used;
+  var awake = (b.idx === G.slotIdx && !used);
+  var fam = G.qs[b.idx] ? (petFam(G.qs[b.idx]._pool) || PETDEX[0]) : PETDEX[0];
+  /* 齿轮箱（检查工坊专属外观）：木架上的铁皮箱，中央转动齿轮 */
+  if(G.style === 'gear'){
+    ctx.fillStyle = 'rgba(0,0,0,.28)';
+    ctx.fillRect(x + 2, GROUND - 4, 56, 6);
+    ctx.fillStyle = used ? '#3a2815' : '#5a4326';
+    ctx.fillRect(x + 22, GROUND - 56, 12, 56);
+    ctx.fillStyle = used ? '#4a3a28' : (awake ? '#8a6c3a' : '#6d5433');
+    ctx.fillRect(x - 2, by, 60, 48);
+    ctx.fillStyle = used ? '#3a2c1c' : (awake ? '#a5824f' : '#7d6440');
+    ctx.fillRect(x - 2, by, 60, 6); ctx.fillRect(x - 2, by + 42, 60, 6);
+    ctx.fillRect(x - 2, by, 6, 48); ctx.fillRect(x + 52, by, 6, 48);
+    drawGear(x + 28, by + 24, 11, 6, G.t / 40, used ? '#3a2c1c' : (awake ? '#ffd166' : '#94794a'));
+    if(awake){
+      ctx.globalAlpha = 0.35 + Math.sin(G.t / 20) * 0.2;
+      ctx.fillStyle = '#ffe9a8';
+      ctx.fillRect(x - 8, by - 8, 72, 3);
+      ctx.globalAlpha = 1;
+      var ab2 = Math.sin(G.t / 12) * 3;
+      ctx.fillStyle = '#ffd166';
+      ctx.fillRect(x + 27, by - 22 + ab2, 5, 11);
+      ctx.fillRect(x + 27, by - 8 + ab2, 5, 5);
+    }
+    return;
+  }
+  // 草编蛋巢（固定在弹跳高度上）
+  ctx.fillStyle = used ? '#6d5433' : (awake ? '#9c7a3f' : '#7d6440');
+  ctx.fillRect(x-6, by+40, 64, 12);
+  ctx.fillStyle = used ? '#55411f' : (awake ? '#7d5f28' : '#5f4c2c');
+  ctx.fillRect(x-6, by+48, 64, 6);
+  ctx.fillStyle = used ? '#8a6c3a' : (awake ? '#c9a26b' : '#94794a');
+  for(var s=0;s<8;s++){ ctx.fillRect(x-2+s*8, by+38+(s%2)*3, 6, 5); }
+  // 蛋：没孵化时在巢里，醒着的彩色发亮，睡着的灰
+  if(!used){
+    var epal = awake ? fam.pal : grayPal(fam.pal);
+    drawSprite(EGG, x+10, by+2, 4, epal);
+    if(awake){
+      ctx.globalAlpha = 0.35 + Math.sin(G.t/20)*0.2;
+      ctx.fillStyle = '#ffe9a8';
+      ctx.fillRect(x+4, by-8, 44, 3);
+      ctx.globalAlpha = 1;
+      // 蛋在轻轻晃：里面的小宠物快孵出来了
+      var wob = Math.sin(G.t/10)*1.5;
+      ctx.fillStyle = 'rgba(255,255,255,.35)';
+      ctx.fillRect(x+8+wob, by+8, 3, 8);
+    }
+  }
+}
+
+/* ---- 水晶（口诀洞窟）：发光水晶里裹着小宠物，走过去就触发 ---- */
+function drawPortal(po, th, cam){
+  var x = po.x - cam;
+  if(x < -80 || x > V.w + 80) return;
+  var awake = (po.idx === G.slotIdx && !po.used);
+  var fam = G.qs[po.idx] ? (petFam(G.qs[po.idx]._pool) || PETDEX[0]) : PETDEX[0];
+  if(po.used){
+    // 已救出：熄灭的水晶底座
+    ctx.fillStyle = '#22344f';
+    ctx.fillRect(x - 4, GROUND - 16, 56, 10);
+    ctx.fillStyle = '#1b2a42';
+    ctx.fillRect(x + 6, GROUND - 10, 36, 4);
+    return;
+  }
+  var bob = Math.sin(G.t / 16 + po.x) * 3;
+  // 石座
+  ctx.fillStyle = awake ? '#3a5378' : '#26364f';
+  ctx.fillRect(x - 8, GROUND - 14, 64, 10);
+  ctx.fillStyle = awake ? '#22344f' : '#1a2740';
+  ctx.fillRect(x - 8, GROUND - 6, 64, 6);
+  // 光晕
+  ctx.globalAlpha = awake ? 0.32 + Math.sin(G.t / 18) * 0.18 : 0.1;
+  ctx.fillStyle = (th && th.accent) || '#5ee7ff';
+  ctx.fillRect(x - 10, GROUND - 88 + bob, 68, 80);
+  ctx.globalAlpha = 1;
+  // 水晶壳（左右两根斜晶柱 + 中间大晶柱）
+  var cpal = awake ? {o:(th && th.accent) || '#5ee7ff'} : {o:'#3a4456'};
+  ctx.fillStyle = cpal.o;
+  ctx.fillRect(x - 4, GROUND - 56 + bob, 10, 46);
+  ctx.fillRect(x + 2, GROUND - 68 + bob, 8, 58);
+  ctx.fillRect(x + 42, GROUND - 50 + bob, 9, 40);
+  ctx.fillStyle = awake ? 'rgba(255,255,255,.4)' : 'rgba(255,255,255,.12)';
+  ctx.fillRect(x + 3, GROUND - 62 + bob, 3, 44);
+  // 里面的小宠物：醒着彩色，睡着灰色
+  drawSprite(fam.rows, x + 12, GROUND - 62 + bob, 2.6, awake ? fam.pal : grayPal(fam.pal));
+  if(awake){
+    var ab = Math.sin(G.t / 12) * 3;
+    ctx.fillStyle = '#ffd166';
+    ctx.fillRect(x + 26, GROUND - 112 + ab, 5, 11);
+    ctx.fillRect(x + 26, GROUND - 98 + ab, 5, 5);
+  } else {
+    var zb = Math.sin(G.t / 30) * 2;
+    ctx.fillStyle = 'rgba(255,255,255,.55)';
+    ctx.font = 'bold 13px "Courier New", monospace';
+    ctx.fillText('z', x + 44, GROUND - 84 + zb);
+  }
+}
+
+/* ---- 浮空神灯（算理神殿）：吊在气球下的灯笼，必须跳到空中够到 ---- */
+function drawLantern(la, th, cam){
+  var x = la.x - cam;
+  if(x < -80 || x > V.w + 80) return;
+  var fam = G.qs[la.idx] ? (petFam(G.qs[la.idx]._pool) || PETDEX[0]) : PETDEX[0];
+  var awake = (la.idx === G.slotIdx && !la.used);
+  if(la.used){
+    // 已够到：灯笼落回地面熄灭
+    ctx.fillStyle = '#3a2a18';
+    ctx.fillRect(x + 4, GROUND - 20, 44, 16);
+    ctx.fillStyle = '#241809';
+    ctx.fillRect(x + 4, GROUND - 6, 44, 4);
+    return;
+  }
+  var bob = Math.sin(G.t / 22 + la.x) * 8;
+  var y = GROUND - 130 + bob;
+  var pal = awake ? fam.pal : grayPal(fam.pal);
+  // 光晕
+  ctx.globalAlpha = awake ? 0.3 + Math.sin(G.t / 15) * 0.15 : 0.08;
+  ctx.fillStyle = (th && th.accent) || '#ffd166';
+  ctx.fillRect(x - 16, y - 14, 80, 78);
+  ctx.globalAlpha = 1;
+  // 气球
+  ctx.fillStyle = awake ? '#ff8e52' : '#4a3a4a';
+  ctx.fillRect(x + 10, y - 34, 28, 22);
+  ctx.fillRect(x + 14, y - 40, 20, 8);
+  ctx.fillStyle = 'rgba(255,255,255,.4)';
+  ctx.fillRect(x + 14, y - 30, 5, 7);
+  // 吊绳
+  ctx.fillStyle = '#c9a26b';
+  ctx.fillRect(x + 23, y - 12, 3, 10);
+  // 灯笼篮 + 里面的小宠物
+  ctx.fillStyle = awake ? '#8a5a1e' : '#3a2a2a';
+  ctx.fillRect(x + 2, y, 46, 30);
+  ctx.fillStyle = awake ? '#6d4312' : '#2a1d1d';
+  ctx.fillRect(x + 2, y + 26, 46, 6);
+  drawSprite(fam.rows, x + 11, y + 4, 2, pal);
+  if(awake){
+    var ab = Math.sin(G.t / 12) * 3;
+    ctx.fillStyle = '#ffd166';
+    ctx.fillRect(x + 24, y - 56 + ab, 5, 11);
+    ctx.fillRect(x + 24, y - 42 + ab, 5, 5);
+  } else {
+    var zb = Math.sin(G.t / 30) * 2;
+    ctx.fillStyle = 'rgba(255,255,255,.55)';
+    ctx.font = 'bold 13px "Courier New", monospace';
+    ctx.fillText('z', x + 46, y - 30 + zb);
+  }
+}
+
+/* ---- 城堡守卫 BOSS（终局城堡）：最后的 3 题都要跳到它头上打 ---- */
+function drawBoss(bs, th, cam){
+  var x = bs.x - cam;
+  if(x < -180 || x > V.w + 180) return;
+  var awake = G.slotIdx >= bs.base && G.slotIdx < bs.base + bs.hp;
+  var hurtK = bs.hurt > 0 ? bs.hurt / 24 : 0;
+  // 影子
+  ctx.fillStyle = 'rgba(0,0,0,.32)';
+  ctx.fillRect(x - 8, GROUND - 6, 110, 8);
+  if(bs.dead){
+    // 倒下：压成一座残骸 + 冒烟
+    var sink = Math.min(20, bs.deadT * 1.4);
+    ctx.fillStyle = '#2a1a3a';
+    ctx.fillRect(x, GROUND - 36 + sink, 92, 36 - sink);
+    ctx.fillStyle = '#1e1230';
+    ctx.fillRect(x + 10, GROUND - 22 + sink, 72, 22 - sink);
+    ctx.fillStyle = '#6b5a8a';
+    ctx.fillRect(x + 24, GROUND - 28 + sink, 5, 5);
+    ctx.fillRect(x + 31, GROUND - 22 + sink, 5, 5);
+    ctx.fillRect(x + 31, GROUND - 28 + sink, 5, 5);
+    ctx.fillRect(x + 24, GROUND - 22 + sink, 5, 5);
+    if(bs.deadT < 60){
+      ctx.globalAlpha = Math.max(0, 1 - bs.deadT / 60);
+      ctx.fillStyle = 'rgba(200,190,230,.4)';
+      ctx.fillRect(x + 20, GROUND - 60 - bs.deadT, 14, 14);
+      ctx.fillRect(x + 52, GROUND - 80 - bs.deadT, 10, 10);
+      ctx.globalAlpha = 1;
+    }
+    return;
+  }
+  var by = GROUND - 150 + Math.sin(G.t / 18) * (awake ? 3 : 1.5);
+  // 身体
+  ctx.fillStyle = '#4a3a6b';
+  ctx.fillRect(x, by + 40, 92, 112);
+  // 头
+  ctx.fillStyle = '#5c4a7a';
+  ctx.fillRect(x + 8, by, 76, 48);
+  // 双角
+  ctx.fillStyle = '#c9a26b';
+  ctx.fillRect(x + 2, by - 20, 14, 26);
+  ctx.fillRect(x + 76, by - 20, 14, 26);
+  ctx.fillRect(x + 6, by - 30, 8, 14);
+  ctx.fillRect(x + 78, by - 30, 8, 14);
+  // 眼睛：醒着红光，偶尔眨眼
+  var blink = awake && (Math.floor(G.t / 46) % 8 === 0);
+  ctx.fillStyle = blink ? '#3a2a5c' : (awake ? '#ff4d6d' : '#6b5a8a');
+  ctx.fillRect(x + 22, by + 14, 14, 11);
+  ctx.fillRect(x + 56, by + 14, 14, 11);
+  // 嘴 + 獠牙
+  ctx.fillStyle = '#2a1a3a';
+  ctx.fillRect(x + 26, by + 34, 40, 9);
+  if(awake){
+    ctx.fillStyle = '#e8e2f5';
+    ctx.fillRect(x + 29, by + 34, 6, 6);
+    ctx.fillRect(x + 43, by + 34, 6, 6);
+    ctx.fillRect(x + 57, by + 34, 6, 6);
+  }
+  // 胸口核心宝石
+  var corePulse = awake ? 0.7 + Math.sin(G.t / 10) * 0.3 : 0.3;
+  ctx.globalAlpha = corePulse;
+  ctx.fillStyle = '#ff8e52';
+  ctx.fillRect(x + 36, by + 68, 20, 26);
+  ctx.globalAlpha = 1;
+  // 双臂
+  ctx.fillStyle = '#5c4a7a';
+  ctx.fillRect(x - 16, by + 52, 22, 68);
+  ctx.fillRect(x + 86, by + 52, 22, 68);
+  ctx.fillStyle = '#4a3a6b';
+  ctx.fillRect(x - 16, by + 112, 22, 8);
+  ctx.fillRect(x + 86, by + 112, 22, 8);
+  // 花纹裂缝
+  ctx.fillStyle = 'rgba(0,0,0,.22)';
+  ctx.fillRect(x + 12, by + 52, 4, 60);
+  ctx.fillRect(x + 76, by + 46, 4, 66);
+  // 剩余血条（pips）
+  var left = bs.hp - bs.hit;
+  for(var p3 = 0; p3 < bs.hp; p3++){
+    ctx.fillStyle = p3 < left ? '#ff4d6d' : '#3a2a5c';
+    ctx.fillRect(x + 12 + p3 * 26, by - 46, 20, 10);
+  }
+  // 该打它了：感叹号
+  if(awake && G.slotIdx < bs.base + bs.hp){
+    var ab = Math.sin(G.t / 12) * 3;
+    ctx.fillStyle = '#ffd166';
+    ctx.fillRect(x + 44, by - 84 + ab, 6, 13);
+    ctx.fillRect(x + 44, by - 68 + ab, 6, 6);
+  }
+  // 受击白闪
+  if(hurtK > 0){
+    ctx.globalAlpha = hurtK * 0.7;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(x - 16, by - 30, 124, 182);
+    ctx.globalAlpha = 1;
+  }
+}
+
+function drawBookFx(cam){
+  for(var i=0;i<G.bookFx.length;i++){
+    var f = G.bookFx[i];
+    var x = f.x - cam;
+    var y = f.y - f.t*3.2;
+    if(f.t > 40) continue;
+    ctx.save();
+    ctx.translate(x+18, y);
+    ctx.rotate(Math.sin(f.t/6)*0.3);
+    if(f.fam){
+      // 孵出来的小宠物扑棱着往上飞
+      var flap = (Math.floor(f.t/5)%2) ? 1 : 0;
+      drawSprite(f.fam.rows, -16, -14+flap*2, 3, f.fam.pal);
+    } else {
+      drawSprite(BOOK, -18, -16, 4, BOOK_PAL);
+    }
+    ctx.restore();
+  }
+}
+
+function drawDoor(cam, th){
+  var x = G.doorX - cam;
+  if(x < -200) return;
+  // 校门：双柱 + 拱梁
+  ctx.fillStyle = '#8a5a3a';
+  ctx.fillRect(x, GROUND-170, 26, 170);
+  ctx.fillRect(x+150, GROUND-170, 26, 170);
+  ctx.fillStyle = '#a06c45';
+  ctx.fillRect(x+4, GROUND-170, 8, 170); ctx.fillRect(x+154, GROUND-170, 8, 170);
+  ctx.fillStyle = '#9c6a42';
+  ctx.fillRect(x-14, GROUND-206, 204, 40);
+  ctx.fillStyle = '#b97c50';
+  ctx.fillRect(x-14, GROUND-206, 204, 8);
+  // 校名牌
+  ctx.fillStyle = '#2b3a5c';
+  ctx.fillRect(x+22, GROUND-198, 132, 26);
+  ctx.fillStyle = '#ffd166';
+  ctx.font = 'bold 15px "Courier New", monospace';
+  ctx.fillText('GOAL', x+44, GROUND-180);
+  // 旗
+  ctx.fillStyle = '#8a5a3a';
+  ctx.fillRect(x+72, GROUND-260, 5, 56);
+  ctx.fillStyle = '#e84c4c';
+  var fw = Math.sin(G.t/18)*4;
+  ctx.fillRect(x+77, GROUND-258, 34+fw, 20);
+  // 门内暖光
+  ctx.fillStyle = 'rgba(255,220,150,.25)';
+  ctx.fillRect(x+26, GROUND-160, 124, 160);
+  // 校门锁：还有题没答完时显示像素挂锁
+  if(G.idx < G.qs.length && G.phase !== 'clearwalk' && G.phase !== 'clearshow'){
+    var lx = x+68, ly = GROUND-268;
+    ctx.fillStyle = '#3a4456';
+    ctx.fillRect(lx+4, ly-8, 18, 8);
+    ctx.fillStyle = '#ff5c7a';
+    ctx.fillRect(lx, ly, 26, 20);
+    ctx.fillStyle = '#ffd166';
+    ctx.fillRect(lx+10, ly+7, 6, 8);
+    var wob = Math.sin(G.t/8)*2;
+    ctx.font = 'bold 13px "Microsoft YaHei", sans-serif';
+    ctx.fillStyle = '#ff5c7a';
+    ctx.fillText('锁', x+96+wob, GROUND-252);
+  }
+}
+
+function drawHero(cam){
+  var x = G.px - cam;
+  var air = G.py > 2;
+  var moving = (G.dir !== 0 && !air && G.phase === 'walk');
+  var bob = moving ? Math.abs(Math.sin(G.t/5))*4 : 0;
+  var y = GROUND - HERO_H - G.py - bob;
+  ctx.fillStyle = 'rgba(0,0,0,.28)';
+  var shw = air ? 20 : 40;
+  ctx.fillRect(x + (HERO_W-shw)/2, GROUND-4, shw, 6);
+  // 跑动扬尘
+  if(moving && Math.floor(G.t/7)%3 === 0){
+    ctx.fillStyle = 'rgba(222,184,140,.5)';
+    if(G.face > 0){ ctx.fillRect(x-6, GROUND-8, 6, 4); }
+    else { ctx.fillRect(x+HERO_W, GROUND-8, 6, 4); }
+  }
+  // 朝左走时整只小人水平翻转
+  ctx.save();
+  if(G.face < 0){ ctx.translate(x*2 + HERO_W, 0); ctx.scale(-1, 1); }
+  drawSprite(HERO, x, y, 4, HERO_PAL);
+  // 空中：红领巾飘带
+  if(air){
+    ctx.fillStyle = '#e84c4c';
+    ctx.fillRect(x-8, y+34, 8, 4);
+    ctx.fillRect(x-14, y+38, 7, 4);
+  }
+
+  if(G.atk > 0){
+    var k = 1 - G.atk/10;
+    ctx.globalAlpha = k;
+    ctx.fillStyle = '#ffffff';
+    for(var i=0;i<5;i++){
+      ctx.fillRect(x + HERO_W + i*12, y + 14 + i*5, 8 + (i*2), 5);
+    }
+    ctx.globalAlpha = 1;
+  }
+  ctx.restore();
+}
+
+// 图鉴里最厉害的宠物跟在小主人身后一起跑
+function drawFollower(cam){
+  if(!save.lastPet) return;
+  var fam = petFam(save.lastPet);
+  if(!fam) return;
+  var st = petStage(fam.id);
+  if(st < 1) return;
+  var px = st >= 3 ? 3.4 : (st === 2 ? 3 : 2.5);   // 完全体最大
+  var x = G.px - cam - 48 - Math.sin(G.t/16)*3;
+  var y = GROUND - 26 + Math.sin(G.t/7)*4;
+  if(G.phase === 'clearwalk') x = G.px - cam + HERO_W + 8;
+  // 完全体：金色光环
+  if(st >= 3){
+    ctx.globalAlpha = 0.3 + Math.sin(G.t/15)*0.12;
+    ctx.fillStyle = '#ffd166';
+    ctx.fillRect(x-6, y-8, 44, 42);
+    ctx.globalAlpha = 1;
+  }
+  drawSprite(fam.rows, x, y, px, fam.pal);
+  // 护盾刚刚挡了一下：队宠闪一下白光
+  if(G.shieldFx > 0){
+    ctx.globalAlpha = Math.min(0.8, G.shieldFx/30);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(x-4, y-4, 40, 38);
+    ctx.globalAlpha = 1;
+  }
+}
+
+// 进化时刻：大只宠物从头顶飘过
+function drawEvoFx(cam){
+  if(!G.evo) return;
+  var f = G.evo;
+  var x = G.px - cam + HERO_W/2 - 24;
+  var y = GROUND - HERO_H - 90 - f.t*1.2;
+  ctx.globalAlpha = Math.max(0, 1 - f.t/50);
+  drawSprite(f.fam.rows, x, y, 5, f.fam.pal);
+  ctx.font = 'bold 16px "Microsoft YaHei", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#ffd166';
+  ctx.fillText('进化！' + f.fam.name + '·' + PET_STAGENAME[petStage(f.fam.id)], x + 24, y - 8);
+  ctx.textAlign = 'left';
+  ctx.globalAlpha = 1;
+}
+
+function drawWalkHint(cam){
+  if(G.phase !== 'walk' || G.moved) return;
+  var x = G.px - cam;
+  var a = 0.55 + 0.45 * Math.sin(G.t / 12);
+  var txt = '按住 ▶ 往前走　← 后退';
+  ctx.globalAlpha = a;
+  ctx.font = 'bold 20px "Microsoft YaHei", sans-serif';
+  ctx.fillStyle = '#0b1220';
+  ctx.fillText(txt, x + 2, GROUND - HERO_H - 48);
+  ctx.fillStyle = '#fff3b0';
+  ctx.fillText(txt, x, GROUND - HERO_H - 50);
+  ctx.globalAlpha = 1;
+}
+
+function drawParts(cam){
+  if(!G.parts.length) return;
+  for(var i=0;i<G.parts.length;i++){
+    var p = G.parts[i];
+    var x = p.x - cam;
+    if(x < -20 || x > V.w + 20) continue;
+    ctx.globalAlpha = Math.max(0, 1 - p.life/p.max);
+    ctx.fillStyle = p.c;
+    ctx.fillRect(Math.round(x), Math.round(p.y), p.s, p.s);
+  }
+  ctx.globalAlpha = 1;
+}
+function drawPopFx(cam){
+  if(!G.popFx) return;
+  var f = G.popFx, x = f.x - cam, y = f.y - f.t*1.4;
+  ctx.globalAlpha = f.t < 26 ? 1 : Math.max(0, 1 - (f.t-26)/14);
+  ctx.font = '900 26px "Courier New", monospace';
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#0b1220'; ctx.fillText(f.text, x+2, y+2);
+  ctx.fillStyle = '#ffd166'; ctx.fillText(f.text, x, y);
+  ctx.textAlign = 'left';
+  ctx.globalAlpha = 1;
+}
+
+// 教学提示：按关卡玩法给出对应的动作提示
+function drawTeach(cam){
+  var cur = objAt(G.slotIdx);
+  if(!cur) return;
+  var styleTxt = {crystal:'走过去碰水晶', bubble:'跳上去救它', lantern:'跳起来够灯笼',
+                  gear:'从下面顶箱子', boss:'跳到它头上！'};
+  var o = cur.o, showBig = false;
+  if(cur.type === 'e' && G.idx === 0 && !o.dead && !o.squashed) showBig = true;
+  if(cur.type === 'portal' && !o.used && G.idx === 0) showBig = true;
+  if(cur.type === 'lantern' && !o.used && G.idx === 0) showBig = true;
+  if(cur.type === 'boss' && !o.dead && G.idx === o.base) showBig = true;
+  if(showBig){
+    var x = (cur.type === 'boss' ? o.x + 40 : o.x + 26) - cam;
+    if(x > -60 && x < V.w + 60){
+      var a = 0.55 + 0.45 * Math.sin(G.t/14);
+      var txt = styleTxt[G.style] || '跳上去救它';
+      ctx.globalAlpha = a;
+      ctx.font = 'bold 18px "Microsoft YaHei", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#0b1220'; ctx.fillText(txt, x+2, GROUND - 138);
+      ctx.fillStyle = '#ffd166'; ctx.fillText(txt, x, GROUND - 140);
+      ctx.textAlign = 'left';
+      ctx.globalAlpha = 1;
+    }
+  }
+  // 站到齿轮箱 / 神灯正下方时画一个「↑」
+  if(((cur.type === 'b' && !o.used) || (cur.type === 'lantern' && !o.used)) &&
+     G.py <= 0 && G.px + HERO_W > o.x - 10 && G.px < o.x + 62){
+    var hx = G.px - cam + HERO_W/2 + Math.sin(G.t/10)*2;
+    var hy = GROUND - HERO_H - 26;
+    ctx.globalAlpha = 0.75;
+    ctx.fillStyle = '#ffd166';
+    ctx.fillRect(hx-2, hy, 4, 12);
+    ctx.fillRect(hx-8, hy+6, 16, 4);
+    ctx.fillRect(hx-5, hy+2, 10, 4);
+    ctx.globalAlpha = 1;
+  }
+  // BOSS 挡路时头顶画「↑」
+  if(cur.type === 'boss' && !o.dead && G.py <= 0 &&
+     G.px + HERO_W > o.x - 10 && G.px < o.x + 92){
+    var hx2 = G.px - cam + HERO_W/2 + Math.sin(G.t/10)*2;
+    var hy2 = GROUND - HERO_H - 26;
+    ctx.globalAlpha = 0.75;
+    ctx.fillStyle = '#ff4d6d';
+    ctx.fillRect(hx2-2, hy2, 4, 12);
+    ctx.fillRect(hx2-8, hy2+6, 16, 4);
+    ctx.fillRect(hx2-5, hy2+2, 10, 4);
+    ctx.globalAlpha = 1;
+  }
+}
+
+// 空中落点提示：把脚下的标记对准史莱姆（变绿）就能踩扁
+function drawLandingMark(cam){
+  if(G.py <= 0 || (G.phase !== 'walk' && G.phase !== 'clearwalk')) return;
+  var speed = G.dir > 0 ? RUN_F : (G.dir < 0 ? -RUN_B : 0);
+  var t = (G.vy + Math.sqrt(Math.max(0, G.vy*G.vy + 2*GRAV*G.py))) / GRAV;
+  var lx = clamp(G.px + speed * t, 0, G.doorX - 20);
+  var x = lx - cam;
+  var cur = objAt(G.slotIdx), hit = false;
+  if(cur && cur.type === 'e' && !cur.o.dead && !cur.o.squashed){
+    if(lx + HERO_W >= cur.o.x - 10 && lx <= cur.o.x + 60) hit = true;
+  } else if(cur && cur.type === 'lantern' && !cur.o.used){
+    // 神灯玩法：落点正对灯笼下方就变绿（跳起来就能够到）
+    if(lx + HERO_W >= cur.o.x - 8 && lx <= cur.o.x + 56) hit = true;
+  } else if(cur && cur.type === 'boss' && !cur.o.dead){
+    if(lx + HERO_W >= cur.o.x - 14 && lx <= cur.o.x + 92) hit = true;
+  }
+  ctx.globalAlpha = .9;
+  ctx.fillStyle = hit ? '#3ddc97' : 'rgba(255,209,102,.7)';
+  ctx.fillRect(x + 6, GROUND - 7, HERO_W - 12, 7);
+  ctx.fillRect(x + HERO_W/2 - 5, GROUND - 18, 10, 5);
+  ctx.fillRect(x + HERO_W/2 - 2, GROUND - 13, 4, 4);
+  ctx.globalAlpha = 1;
+}
+
+
+function drawClearShow(){
+  if(G.phase !== 'clearshow') return;
+  var cx = V.w/2, cy = V.h/2 - 120;
+  var text = 'STAGE CLEAR!';
+  var shown = Math.floor(G.clearT/6);
+  ctx.textAlign = 'center';
+  for(var i=0;i<text.length;i++){
+    if(i > shown) break;
+    var ch = text.charAt(i);
+    var ly = cy + Math.sin(G.clearT/8 + i)*5;
+    var lx = cx + (i - text.length/2)*34 + 17;
+    ctx.font = '900 40px "Courier New", monospace';
+    ctx.fillStyle = '#2b1a08';
+    ctx.fillText(ch, lx+4, ly+4);
+    ctx.fillStyle = i%2 ? '#ffd166' : '#5ee7ff';
+    ctx.fillText(ch, lx, ly);
+  }
+  ctx.textAlign = 'left';
+  // 彩纸
+  for(var c=0;c<G.confetti.length;c++){
+    var p = G.confetti[c];
+    ctx.fillStyle = p.c;
+    ctx.fillRect(p.x, p.y, 7, 7);
+  }
+}
+
+function render(){
+  var th = G.theme || LEVELS[G.li].theme;
+  var shakeX = G.shake > 0 ? (Math.random()-0.5)*10 : 0;
+
+  ctx.save();
+  ctx.translate(shakeX, 0);
+  drawBG(th, G.cam);
+  drawDoor(G.cam, th);
+  for(var i=0;i<G.blocks.length;i++) drawBlock(G.blocks[i], th, G.cam);
+  for(var j=0;j<G.enemies.length;j++) drawEnemy(G.enemies[j], th, G.cam);
+  for(var p2=0;p2<G.portals.length;p2++) drawPortal(G.portals[p2], th, G.cam);
+  for(var l2=0;l2<G.lanterns.length;l2++) drawLantern(G.lanterns[l2], th, G.cam);
+  if(G.boss) drawBoss(G.boss, th, G.cam);
+  drawBookFx(G.cam);
+  drawParts(G.cam);
+  drawLandingMark(G.cam);
+  drawHero(G.cam);
+  drawFollower(G.cam);
+  drawEvoFx(G.cam);
+  drawPopFx(G.cam);
+  drawTeach(G.cam);
+  drawWalkHint(G.cam);
+  drawMissFx(G.cam);
+  drawClearShow();
+  ctx.restore();
+
+  ctx.font = 'bold 16px "Microsoft YaHei", sans-serif';
+  ctx.fillStyle = 'rgba(255,255,255,.14)';
+  ctx.fillText(G.hLabel || '数学闯关', 20, V.h - 20);
+}
+
+function drawMissFx(cam){
+  if(!G.missFx) return;
+  var f = G.missFx;
+  var x = f.x - cam;
+  if(x < -100 || x > V.w + 100) return;
+  var rise = f.t * 1.1;
+  var alpha = f.t < 32 ? 1 : Math.max(0, 1 - (f.t - 32) / 13);
+  ctx.globalAlpha = alpha;
+  ctx.font = 'bold 22px "Microsoft YaHei", sans-serif';
+  ctx.fillStyle = '#0b1220';
+  ctx.fillText(f.label, x + 2, f.y - rise + 2);
+  ctx.fillStyle = '#ff5c7a';
+  ctx.fillText(f.label, x, f.y - rise);
+  ctx.globalAlpha = 1;
+}
+
+/* ============ 主循环 ============ */
+var last = 0, ctrlOn = false;
+var CONF_COLORS = ['#ffd166','#5ee7ff','#ff8e52','#8ed166','#ff5c7a','#fff3b0'];
+
+// 落地 / 踩击的小碎屑
+function burst(x, y, n, col, spd){
+  for(var i=0;i<n;i++){
+    G.parts.push({
+      x:x, y:y,
+      vx:(Math.random()-0.5)*(spd||5),
+      vy:-(1+Math.random()*(spd||5)*0.8),
+      g:0.28 + Math.random()*0.12,
+      life:0, max:16 + Math.random()*12,
+      s:2 + Math.floor(Math.random()*2),
+      c:col || '#ffd166'
+    });
+  }
+}
+
+function updateFx(dt){
+  for(var i=G.parts.length-1;i>=0;i--){
+    var p = G.parts[i];
+    p.life += dt;
+    p.x += p.vx*dt; p.y += p.vy*dt; p.vy += p.g*dt;
+    if(p.life > p.max) G.parts.splice(i,1);
+  }
+  if(G.popFx){ G.popFx.t += dt; if(G.popFx.t > 40) G.popFx = null; }
+}
+
+function applyPhysics(dt){
+  if(G.py > 0 || G.vy > 0){
+    G.py += G.vy * dt;
+    G.vy -= GRAV * dt;
+    if(G.py <= 0){
+      var hard = G.vy < -6;
+      G.py = 0; G.vy = 0;
+      G.coyote = COYOTE;
+      if(hard && G.phase === 'walk') burst(G.px + HERO_W/2, GROUND - 6, 5, 'rgba(226,196,150,.9)', 3);
+      if(G.jbuf > 0 && G.phase === 'walk'){ G.jbuf = 0; doJump(); }
+    }
+  } else {
+    if(G.coyote > 0) G.coyote -= dt;
+  }
+  if(G.jbuf > 0) G.jbuf -= dt;
+}
+function doJump(){
+  G.vy = JUMP_V;
+  if(G.py <= 0) G.py = 0.5;
+  G.coyote = 0;
+  beep(520, 0.07, 'square', 0.035);
+}
+function tryJump(hold){
+  if(G.phase !== 'walk') return;
+  if(hold !== false) G.jumpHold = true;
+  if(G.py <= 0 || G.coyote > 0){ doJump(); }
+  else { G.jbuf = JBUF; }   // 空中按早了一点点，落地立刻补跳
+}
+// 松手就截断上升速度：轻点 = 小跳，按住 = 大跳
+function endJump(){
+  G.jumpHold = false;
+  if(G.vy > 3) G.vy *= 0.42;
+}
+/* ---- 方向控制 ---- */
+function syncDir(){ G.dir = (held.r ? 1 : 0) - (held.l ? 1 : 0); }
+function releaseAll(){
+  held.l = false; held.r = false; G.dir = 0;
+  var a = $('btnLeft'), b = $('btnRight');
+  if(a) a.classList.remove('on');
+  if(b) b.classList.remove('on');
+}
+function spawnConfetti(x, y){
+  for(var i=0;i<50;i++){
+    G.confetti.push({
+      x: x + (Math.random()-0.5)*160,
+      y: y + (Math.random()-0.5)*40,
+      vx: (Math.random()-0.5)*7,
+      vy: -(2 + Math.random()*5),
+      c: CONF_COLORS[Math.floor(Math.random()*CONF_COLORS.length)]
+    });
+  }
+}
+function objAt(slot){
+  if(G.boss && !G.boss.dead && slot >= G.boss.base && slot < G.boss.base + G.boss.hp){
+    return {o:G.boss, type:'boss'};
+  }
+  for(var i=0;i<G.enemies.length;i++){ if(G.enemies[i].idx === slot) return {o:G.enemies[i], type:'e'}; }
+  for(var j=0;j<G.blocks.length;j++){ if(G.blocks[j].idx === slot) return {o:G.blocks[j], type:'b'}; }
+  for(var p=0;p<G.portals.length;p++){ if(G.portals[p].idx === slot) return {o:G.portals[p], type:'portal'}; }
+  for(var l=0;l<G.lanterns.length;l++){ if(G.lanterns[l].idx === slot) return {o:G.lanterns[l], type:'lantern'}; }
+  return null;
+}
+function loop(ts){
+  var dt = Math.min(2.5, (ts - last) / 16.67 || 1);
+  last = ts;
+  G.t += dt;
+  if(G.shake > 0) G.shake -= dt;
+  if(G.atk > 0) G.atk -= dt;
+
+  // 命中定帧：踩中那一瞬间冻结 3-4 帧，打击感才“实”
+  if(G.hitStop > 0){
+    G.hitStop -= dt;
+    updateFx(dt);
+    render();
+    requestAnimationFrame(loop);
+    return;
+  }
+
+  var cur = objAt(G.slotIdx);
+  var e = (cur && cur.type === 'e') ? cur.o : null;
+  var b = (cur && cur.type === 'b') ? cur.o : null;
+  var po = (cur && cur.type === 'portal') ? cur.o : null;
+  var la = (cur && cur.type === 'lantern') ? cur.o : null;
+  var bs = (cur && cur.type === 'boss') ? cur.o : null;
+
+  if(G.phase === 'walk'){
+    // 完全由孩子控制：按住 ▶ 前进 / 按住 ◀ 后退，松手就站住
+    if(G.dir !== 0){
+      G.px += G.dir * (G.dir > 0 ? RUN_F : RUN_B) * dt;
+      G.px = clamp(G.px, 0, G.doorX - 20);
+      G.face = G.dir > 0 ? 1 : -1;
+      if(!G.moved){ G.moved = true; $('btnRight').classList.remove('pulse'); }
+    }
+    applyPhysics(dt);
+    if(G.phase === 'walk'){ // 物理后仍处于行走才判定触发
+      if(e && !e.dead && !e.squashed){
+        var overlap = (G.px + HERO_W >= e.x - 10) && (G.px <= e.x + 60);
+        if(overlap && G.vy < 0 && G.py > 0 && G.py <= 100){
+          // 只有真踩破泡泡才出题：+5 分（命中定帧 + 碎屑 + 飘分）
+          e.squashed = true;
+          e.sqT = 0;
+          G.vy = 7;
+          G.score += 5;
+          G.hitStop = 4;
+          G.shake = 6;
+          burst(e.x + 26, GROUND - 18, 12, '#9fd8ff', 6);
+          G.popFx = {x: e.x + 26, y: GROUND - 96, t: 0, text: '+5'};
+          beep(720, 0.07, 'square', 0.05);
+          G.slotIdx++;
+          G.phase = 'question';
+          askQuestion();
+        } else if(overlap && G.py <= 0){
+          // 走路撞上泡泡：顶回去重来，撞满三次这只才作废（题目不丢，校门补）
+          G.px = Math.max(0, e.x - HERO_W - 14);
+          if(G.bonkT <= 0){
+            e.bumpN = (e.bumpN || 0) + 1;
+            G.bonkT = 18;
+            G.shake = 4;
+            beep(240, 0.06, 'square', 0.035);
+            if(e.bumpN >= 3){
+              e.dead = true;
+              G.slotIdx++;
+              G.missFx = {x: e.x - 10, y: GROUND - 110, t: 0, label: '泡泡飘走了，校门前再救'};
+            } else {
+              G.missFx = {x: e.x - 20, y: GROUND - 110, t: 0, label: '跳上去，落到泡泡上'};
+            }
+          }
+        } else if(G.px > e.x + 56){
+          // 跳过头了：泡泡飘走，题目留到后面的怪或校门前
+          e.dead = true;
+          G.slotIdx++;
+          G.missFx = {x: e.x - 10, y: GROUND - 110, t: 0, label: '泡泡飘走了，校门前再救'};
+        }
+      }
+      if(G.phase === 'walk' && b && !b.used){
+        var bov = (G.px + HERO_W >= b.x - 10) && (G.px <= b.x + 62);
+        if(bov && G.vy > 0 && G.py >= 52 && G.py <= 138){
+          // 只有真顶到蛋巢才出题：+5 分
+          b.used = true;
+          b.bump = 26;
+          var bfam = G.qs[b.idx] ? petFam(G.qs[b.idx]._pool) : null;
+          G.bookFx.push({x: b.x, y: GROUND - 250, t: 0, fam: bfam});
+          G.vy = -2;
+          G.score += 5;
+          G.hitStop = 3;
+          burst(b.x + 26, GROUND - 170, 8, '#ffd166', 5);
+          G.popFx = {x: b.x + 26, y: GROUND - 214, t: 0, text: '+5'};
+          beep(880, 0.08, 'square', 0.045);
+          G.slotIdx++;
+          G.phase = 'question';
+          askQuestion();
+        } else if(G.px > b.x + 60){
+          // 从巢下面跑过去了：这颗蛋作废，题目留到后面补
+          b.used = true;
+          G.slotIdx++;
+          G.missFx = {x: b.x - 10, y: GROUND - 240, t: 0, label: '没孵到，校门前再孵'};
+        }
+      }
+      // 水晶（口诀洞窟）：走到跟前自动触发，练快问快答的节奏
+      if(G.phase === 'walk' && po && !po.used){
+        var pov = (G.px + HERO_W >= po.x - 8) && (G.px <= po.x + 56);
+        if(pov && G.py <= 0){
+          po.used = true;
+          var pfam = G.qs[po.idx] ? petFam(G.qs[po.idx]._pool) : null;
+          G.bookFx.push({x: po.x, y: GROUND - 90, t: 0, fam: pfam});
+          burst(po.x + 24, GROUND - 40, 10, (G.theme && G.theme.accent) || '#5ee7ff', 5);
+          G.score += 5;
+          G.hitStop = 3;
+          G.popFx = {x: po.x + 24, y: GROUND - 110, t: 0, text: '+5'};
+          beep(760, 0.08, 'square', 0.045);
+          G.slotIdx++;
+          G.phase = 'question';
+          askQuestion();
+        }
+      }
+      // 浮空神灯（算理神殿）：必须跳到空中够到它；从下面跑过去就算错过
+      if(G.phase === 'walk' && la && !la.used){
+        var lov = (G.px + HERO_W >= la.x - 8) && (G.px <= la.x + 56);
+        if(lov && G.py > 30 && G.py < 160){
+          la.used = true;
+          var lfam = G.qs[la.idx] ? petFam(G.qs[la.idx]._pool) : null;
+          G.bookFx.push({x: la.x, y: GROUND - 170, t: 0, fam: lfam});
+          burst(la.x + 24, GROUND - 130, 10, '#ffd166', 5);
+          G.score += 5;
+          G.hitStop = 3;
+          G.popFx = {x: la.x + 24, y: GROUND - 200, t: 0, text: '+5'};
+          beep(820, 0.08, 'square', 0.045);
+          G.slotIdx++;
+          G.phase = 'question';
+          askQuestion();
+        } else if(G.px > la.x + 62){
+          la.used = true;
+          G.slotIdx++;
+          G.missFx = {x: la.x - 10, y: GROUND - 210, t: 0, label: '没够到，校门前再够'};
+        }
+      }
+      // 城堡守卫 BOSS（终局城堡）：跳到它头上算一次攻击，每题一击
+      if(G.phase === 'walk' && bs){
+        var bsov = (G.px + HERO_W >= bs.x - 14) && (G.px <= bs.x + 92);
+        if(bsov && G.vy < 0 && G.py > 0 && G.py <= 110){
+          bs.hit++; bs.hurt = 24;
+          G.vy = 8;
+          G.score += 5;
+          G.hitStop = 5;
+          G.shake = 8;
+          burst(bs.x + 44, GROUND - 110, 14, '#ffd166', 6);
+          G.popFx = {x: bs.x + 44, y: GROUND - 180, t: 0, text: '+5'};
+          beep(520, 0.09, 'square', 0.05);
+          G.slotIdx++;
+          G.phase = 'question';
+          askQuestion();
+        } else if(bsov && G.py <= 0){
+          G.px = Math.max(0, bs.x - HERO_W - 18);
+          if(G.bonkT <= 0){
+            G.bonkT = 20;
+            G.shake = 5;
+            beep(200, 0.08, 'square', 0.04);
+            G.missFx = {x: bs.x - 30, y: GROUND - 210, t: 0, label: '跳到它头上！'};
+          }
+        }
+      }
+      // 校门：题目没做完不许过关，停在门前把剩下的题一道一道补完
+      if(G.phase === 'walk' && G.px >= G.doorX - 60){
+        if(G.idx < G.qs.length){
+          G.px = G.doorX - 60;
+          G.gateWait += dt;
+          if(!G.gateHint){
+            G.gateHint = true;
+            G.missFx = {x: G.doorX + 40, y: GROUND - 250, t: 0,
+                         label: '还有 ' + (G.qs.length - G.idx) + ' 题，答完开门'};
+          }
+          if(G.gateWait > 28){ G.gateWait = 0; G.gateHint = false; G.phase = 'question'; G.atGate = true; askQuestion(); }
+        } else if(G.px >= G.doorX - 30){
+          G.phase = 'clearwalk'; G.clearT = 0;
+        } else if(!G.gateHint){
+          G.gateHint = true;
+          G.missFx = {x: G.doorX + 30, y: GROUND - 250, t: 0, label: '门开了，按 ▶ 走过去'};
+        }
+      }
+    }
+  } else if(G.phase === 'clearwalk'){
+    G.px += RUN * dt;
+    applyPhysics(dt);
+    G.clearT += dt;
+    if(G.px >= G.doorX + 20 && G.confetti.length === 0){
+      spawnConfetti(G.px + 40, GROUND - 220);
+      sfxClear();
+    }
+    if(G.px >= G.doorX + 140 || G.clearT > 60){
+      G.phase = 'clearshow'; G.clearT = 0;
+      if(G.confetti.length === 0){ spawnConfetti(V.w/2, 200); sfxClear(); }
+    }
+  } else if(G.phase === 'clearshow'){
+    G.clearT += dt;
+    for(var c2=0;c2<G.confetti.length;c2++){
+      var p2 = G.confetti[c2];
+      p2.x += p2.vx * dt; p2.y += p2.vy * dt; p2.vy += 0.12 * dt;
+    }
+    if(G.clearT > 150){ levelClear(); }
+  } else if(G.phase === 'question' || G.phase === 'attack'){
+    // 答题时重力仍然生效，避免悬停半空
+    applyPhysics(dt);
+  }
+
+  // 砖块弹跳动画 & 书本飞出
+  for(var bi=0; bi<G.blocks.length; bi++){ if(G.blocks[bi].bump > 0) G.blocks[bi].bump -= dt; }
+  for(var fi=G.bookFx.length-1; fi>=0; fi--){ G.bookFx[fi].t += dt; if(G.bookFx[fi].t > 40) G.bookFx.splice(fi,1); }
+  for(var si=0; si<G.enemies.length; si++){ if(G.enemies[si].squashed) G.enemies[si].sqT = (G.enemies[si].sqT||0) + dt; }
+  if(G.missFx){ G.missFx.t += dt; if(G.missFx.t > 45) G.missFx = null; }
+  if(G.boss){
+    if(G.boss.hurt > 0) G.boss.hurt -= dt;
+    if(G.boss.dead) G.boss.deadT += dt;
+  }
+  if(G.evo){ G.evo.t += dt; if(G.evo.t > 50) G.evo = null; }
+  if(G.shieldFx > 0) G.shieldFx -= dt;
+  if(G.bonkT > 0) G.bonkT -= dt;
+  updateFx(dt);
+
+  // 摄像机
+  var target = clamp(G.px - 520, 0, Math.max(0, G.worldLen - V.w));
+  G.cam += (target - G.cam) * 0.1 * dt;
+
+  // 方向旋钮只在走路时出现，其余时候收起来
+  var wantCtrl = (G.phase === 'walk');
+  if(wantCtrl !== ctrlOn){
+    ctrlOn = wantCtrl;
+    $('ctrlMove').classList.toggle('hide', !wantCtrl);
+    $('btnJump').classList.toggle('hide', !wantCtrl);
+    if(!wantCtrl) releaseAll();
+    else if(!G.moved) $('btnRight').classList.add('pulse');
+  }
+
+  render();
+  requestAnimationFrame(loop);
+}
+
+/* ============ 出题 ============ */
+function askQuestion(){
+  var q = G.qs[G.idx];
+  if(!q){ return; }
+  releaseAll();   // 出题就站住，别一边答题一边往前跑
+  if(G.autoT){ clearTimeout(G.autoT); G.autoT = null; }
+  $('nextRow').innerHTML = '';
+  G.answered = false;
+  G.typed = '';
+  var fam = q._pool ? petFam(q._pool) : null;
+  var famTxt = fam ? '　·　目标：' + fam.name : '';
+  var rvTxt = (q._review && fam) ? '　·　🐾 走丢宠物救援 第 ' + q._review.lvl + '/' + GAPS.length + ' 轮' : '';
+  $('qtag').textContent = (G.atGate ? '门前补题 · ' : '') + '第 ' + (G.idx+1) + ' / ' + G.qs.length + ' 题　·　' + (G.qtagLabel || '') + famTxt + rvTxt;
+  var qt = $('qtext');
+  // 数字部分用等宽高亮
+  qt.innerHTML = '';
+  var span = document.createElement('span');
+  span.textContent = q.q;
+  qt.appendChild(span);
+
+  var opts = $('opts');
+  var padWrap = $('padWrap');
+  opts.innerHTML = '';
+  $('fb').innerHTML = '';
+
+  if(q.t === 'c'){
+    opts.style.display = 'grid';
+    padWrap.style.display = 'none';
+    q.opts.forEach(function(o, i){
+      var b = document.createElement('button');
+      b.className = 'opt';
+      b.innerHTML = '<span class="k">' + (i+1) + '</span>' + o;
+      b.onclick = function(){ answer(i); };
+      opts.appendChild(b);
+    });
+  } else {
+    opts.style.display = 'none';
+    padWrap.style.display = 'block';
+    buildPad();
+  }
+  show('qcard');
+}
+
+function buildPad(){
+  var w = $('padWrap');
+  if(w.dataset.built === '1'){ renderAnswer(); return; }
+  w.innerHTML = '';
+  var box = document.createElement('div');
+  box.id = 'answerBox';
+  w.appendChild(box);
+  var pad = document.createElement('div');
+  pad.id = 'pad';
+  var keys = ['1','2','3','4','5','6','7','8','9','0','清除','确定'];
+  keys.forEach(function(k){
+    var b = document.createElement('button');
+    b.className = 'key' + (k === '确定' ? ' go' : (k === '清除' ? ' clr' : ''));
+    b.textContent = k;
+    b.onclick = function(){
+      if(k === '清除'){ G.typed = ''; }
+      else if(k === '确定'){ submitNum(); return; }
+      else { if(G.typed.length < 8) G.typed += k; }
+      renderAnswer();
+    };
+    pad.appendChild(b);
+  });
+  w.appendChild(pad);
+  w.dataset.built = '1';
+  renderAnswer();
+}
+
+function renderAnswer(){
+  var box = document.getElementById('answerBox');
+  if(box) box.textContent = G.typed || '　';
+}
+
+function submitNum(){
+  if(G.answered) return;
+  if(G.typed === '') return;
+  answer(parseInt(G.typed, 10));
+}
+
+function answer(val){
+  if(G.answered) return;
+  var q = G.qs[G.idx];
+  var ok = false;
+  if(q.t === 'c'){ ok = (val === q.ans); }
+  else { ok = (val === q.ans); }
+  G.answered = true;
+  if(q._pool){
+    var st = save.stats[q._pool];
+    if(!st){ st = save.stats[q._pool] = {c:0, w:0}; }
+    if(ok){ st.c++; } else { st.w++; }
+    var dst = G.dayStats[q._pool];
+    if(!dst){ dst = G.dayStats[q._pool] = {c:0, w:0}; }
+    if(ok){ dst.c++; } else { dst.w++; }
+  }
+  if(!ok){ G.wrongs.push({q:q.q, sol:q.sol}); }
+  if(q._review){ gradeReview(q, ok); }
+  else if(!ok && q._meta){ addReview(q); }
+  persist();
+
+  var fb = $('fb');
+  var qc = $('qcard');
+  qc.classList.remove('ok'); qc.classList.remove('no');
+  qc.classList.add(ok ? 'ok' : 'no');
+  setTimeout(function(){ qc.classList.remove('ok'); qc.classList.remove('no'); }, 900);
+  if(ok){
+    G.correct++;
+    G.streak++;
+    G.score += 10 + Math.min(10, (G.streak-1)*2);
+    // 宠物收集：普通题答对 → 该族 +1；救援题只报进度，三轮全过才真正归队
+    var evMsg = '';
+    if(q._pool && petFam(q._pool) && q._review){
+      var fam = petFam(q._pool);
+      if(q._review.graduated){
+        var b4 = petStage(q._pool);
+        petGain(q._pool);
+        var af = petStage(q._pool);
+        if(af > b4){
+          G.evo = {fam:fam, t:0};
+          G.popFx = {x:G.px + HERO_W/2, y:GROUND - 150, t:0, text:'进化！'};
+          evMsg = '<div class="adv" style="border-color:#3ddc97;background:#0f221a;color:#c8ecd9">🎉 三轮全过，走丢的 ' + fam.name + ' 真正归队，还进化成<b>' + PET_STAGENAME[af] + '</b>了！' +
+            (af === 3 ? '完全体宠物开局会送你护盾。' : '') + '</div>';
+          beep(1046, 0.12, 'square', 0.05);
+          setTimeout(function(){ beep(1318, 0.14, 'square', 0.05); }, 120);
+        } else {
+          G.popFx = {x:G.px + HERO_W/2, y:GROUND - 150, t:0, text:fam.name + ' 归队！'};
+          evMsg = '<div class="adv" style="border-color:#3ddc97;background:#0f221a;color:#c8ecd9">🎉 三轮全过，走丢的 ' + fam.name + ' 真正归队了！这一类题你是真的会了。</div>';
+        }
+      } else {
+        var nxtGap = GAPS[q._review.lvl] || GAPS[0];
+        G.popFx = {x:G.px + HERO_W/2, y:GROUND - 150, t:0, text:'救援 ' + q._review.lvl + '/' + GAPS.length};
+        evMsg = '<div class="adv" style="border-color:#3ddc97;background:#0f221a;color:#c8ecd9">🐾 ' + fam.name + ' 的救援进度 <b>' + q._review.lvl + '/' + GAPS.length + '</b>！它隔 ' + nxtGap + ' 天还会回来一次，三轮全过才真正归队。</div>';
+      }
+    } else if(q._pool && petFam(q._pool)){
+      var before = petStage(q._pool);
+      petGain(q._pool);
+      var after = petStage(q._pool);
+      var fam2 = petFam(q._pool);
+      if(after > before){
+        G.evo = {fam:fam2, t:0};
+        G.popFx = {x:G.px + HERO_W/2, y:GROUND - 150, t:0, text:'进化！'};
+        evMsg = '<div class="adv" style="border-color:#3ddc97;background:#0f221a;color:#c8ecd9">🎉 ' + fam2.name + ' 进化成<b>' + PET_STAGENAME[after] + '</b>了！' +
+          (after === 3 ? '完全体宠物开局会送你护盾。' : '') + '</div>';
+        beep(1046, 0.12, 'square', 0.05);
+        setTimeout(function(){ beep(1318, 0.14, 'square', 0.05); }, 120);
+      } else {
+        G.popFx = {x:G.px + HERO_W/2, y:GROUND - 150, t:0, text:fam2.name + ' +1'};
+      }
+    }
+    fb.innerHTML = '<span class="okline">✔ 命中！+' + (10 + Math.min(10,(G.streak-1)*2)) + ' 分</span>　' + q.sol + evMsg;
+    if(q.t === 'c'){
+      var btns = $('opts').children;
+      if(btns[q.ans]) btns[q.ans].classList.add('ok');
+    }
+    sfxOk();
+    G.atk = 10;
+    showNext();
+  } else {
+    G.wrong++;
+    G.streak = 0;
+    // 完全体宠物护盾：替你挡一下，不掉血
+    var shielded = (G.shield > 0);
+    if(shielded){
+      G.shield--;
+      G.shieldFx = 30;
+    } else {
+      G.hp--;
+      G.shake = 12;
+    }
+    sfxHit();
+    var correctText = (q.t === 'c') ? q.opts[q.ans] : q.ans;
+    var failTail = '';
+    if(q._review){
+      failTail = '<div class="adv" style="border-color:#e26d5a;background:#221010;color:#f3c9c2">🐾 这只宠物还没救回来——看完讲解记住正确做法，隔 ' + GAPS[0] + ' 天它会再来找你（救援从第 1 轮重新开始）。</div>';
+    }
+    fb.innerHTML = (shielded
+      ? '<span class="okline">🛡 完全体宠物替你挡了一下，血没掉！护盾还剩 ' + G.shield + ' 个。</span><br>'
+      : '<span class="warnline">✘ 被撞了一下。正确答案：' + correctText + '</span><br>') + q.sol + failTail;
+    if(q.t === 'c'){
+      var bs = $('opts').children;
+      if(bs[q.ans]) bs[q.ans].classList.add('ok');
+    }
+    updateHUD();
+    showNext();
+  }
+}
+
+function showNext(){
+  var nr = $('nextRow');
+  nr.innerHTML = '';
+  var b = document.createElement('button');
+  b.className = 'pbtn';
+  b.textContent = '看完了，继续闯关 ▶';
+  b.onclick = advance;
+  nr.appendChild(b);
+  var qc = $('qcard');
+  qc.scrollTop = qc.scrollHeight;
+  // 不自动翻页：讲解要让孩子自己读完（家长也经常会念一遍）
+  if(G.autoT){ clearTimeout(G.autoT); G.autoT = null; }
+}
+
+function advance(){
+  if(G.phase !== 'question') return;
+  if(G.autoT){ clearTimeout(G.autoT); G.autoT = null; }
+  G.missFx = null; G.gateWait = 0; G.gateHint = false;
+  G.idx++;
+  // 最后一击答完：BOSS 倒下
+  if(G.boss && !G.boss.dead && G.boss.hit >= G.boss.hp){
+    G.boss.dead = true; G.boss.deadT = 0;
+    burst(G.boss.x + 46, GROUND - 110, 26, '#ffd166', 7);
+    burst(G.boss.x + 46, GROUND - 60, 18, '#ff4d6d', 6);
+    G.shake = 14;
+    G.popFx = {x: G.boss.x + 40, y: GROUND - 220, t: 0, text: 'BOSS 倒下！'};
+    beep(392, 0.16, 'square', 0.06);
+  }
+  if(G.atGate){
+    G.atGate = false;
+    // 停在门前继续补题，孩子不用再按方向键
+    G.px = G.doorX - 60; G.gateWait = 0; G.gateHint = false;
+  }
+  else { G.px += 46; }
+  hide('qcard');
+  updateHUD();
+  if(G.hp <= 0){
+    G.phase = 'fail';
+    levelFail();
+  } else {
+    G.phase = 'walk';
+  }
+}
+
+/* ============ 结算 ============ */
+function levelClear(){
+  if(G.phase === 'clear') return;
+  G.phase = 'clear';
+  sfxClear();
+  var total = G.correct + G.wrong;
+  var acc = total ? G.correct/total : 0;
+  var stars = acc >= 0.9 ? 3 : (acc >= 0.75 ? 2 : (acc >= 0.6 ? 1 : 0));
+  if(G.mode === 'plan' && G.day >= 0){
+    save.days[G.day] = {done:true, acc:acc, stars:stars, cats:G.dayStats, wrongs:G.wrongs, secs:Math.round((Date.now()-G.t0)/1000)};
+    $('clearAnalysis').innerHTML = dayAnalysisHTML({cats:G.dayStats, wrongs:G.wrongs, secs:Math.round((Date.now()-G.t0)/1000)}, '今日学习分析');
+  } else {
+    if(stars > (save.stars[G.li] || 0)){ save.stars[G.li] = stars; }
+    if(stars >= 1 && G.li + 1 >= save.unlocked && G.li < LEVELS.length - 1){
+      save.unlocked = Math.min(LEVELS.length, G.li + 2);
+    }
+    $('clearAnalysis').innerHTML = dayAnalysisHTML({cats:G.dayStats, wrongs:G.wrongs, secs:Math.round((Date.now()-G.t0)/1000)}, '本次表现分析');
+  }
+  persist();
+
+  $('clearTitle').textContent = stars === 3 ? '完美通关！' : (stars >= 1 ? '通关！' : '勉强通过');
+  $('clearSub').textContent = (G.hLabel || (LEVELS[G.li] ? LEVELS[G.li].name : '')) + '　正确率 ' + Math.round(acc*100) + '%';
+  var s = '';
+  for(var i=0;i<3;i++) s += (i<stars ? '★' : '☆');
+  $('clearStars').textContent = s;
+  var petTxt = G.correct > 0 ? '本次救回/孵出宠物 <b>' + G.correct + '</b> 只，图鉴里最厉害的那只会跟着你跑。' : '';
+  $('clearStat').innerHTML = '答对 <b>' + G.correct + '</b> 题，答错 <b>' + G.wrong + '</b> 题，得分 <b>' + G.score + '</b>。' +
+    (stars === 3 ? '这一关的目标全部达成，漂亮！' : (stars >= 1 ? '再打一次可以冲三星。' : '建议回到手册对应的那一节，再练一遍。')) +
+    (petTxt ? '<br>' + petTxt : '');
+  $('btnNext').style.display = (G.li < LEVELS.length - 1) ? 'inline-block' : 'none';
+  show('clearLayer');
+  updateHUD();
+  renderMap();
+}
+
+function levelFail(){
+  var total = G.correct + G.wrong;
+  $('failStat').innerHTML = '这一关你答对了 <b>' + G.correct + '</b> 题，答错 <b>' + G.wrong + '</b> 题。' +
+    '错的这 <b>' + G.wrong + '</b> 道，就是手册里要补的地方。';
+  show('failLayer');
+}
+
+/* ============ 地图 ============ */
+// 在任意画布上画像素精灵（图鉴卡片用）
+function spriteOn(g, rows, x, y, px, pal){
+  for(var r=0;r<rows.length;r++){
+    var row = rows[r];
+    for(var c=0;c<row.length;c++){
+      var ch = row.charAt(c);
+      if(ch === '.' || ch === ' ') continue;
+      var col = pal[ch];
+      if(!col) continue;
+      g.fillStyle = col;
+      g.fillRect(Math.round(x + c*px), Math.round(y + r*px), px, px);
+    }
+  }
+}
+function renderPets(){
+  var owned = 0, full = 0, total = 0;
+  PETDEX.forEach(function(f){
+    var n = save.pets[f.id] ? save.pets[f.id].n : 0;
+    total += n;
+    if(n > 0) owned++;
+    if(petStage(f.id) >= 3) full++;
+  });
+  $('petSub').textContent = '已收养 ' + owned + '/8 族 · 累计 ' + total + ' 只 · 完全体 ' + full + ' 只 · 开局护盾 ' + shieldCount() + ' 个';
+  var g = $('petGrid');
+  g.innerHTML = '';
+  PETDEX.forEach(function(f){
+    var n = save.pets[f.id] ? save.pets[f.id].n : 0;
+    var st = petStage(f.id);
+    var card = document.createElement('div');
+    card.className = 'petcard' + (st > 0 ? ' owned' : '') + (st >= 3 ? ' full' : '');
+    var c2 = document.createElement('canvas');
+    c2.width = 120; c2.height = 84;
+    card.appendChild(c2);
+    var g2 = c2.getContext('2d');
+    var px = st >= 3 ? 6 : (st === 2 ? 5 : 4);
+    var x = (120 - 12*px) / 2, y = (84 - 10*px) / 2 + 2;
+    spriteOn(g2, f.rows, x, y, px, st > 0 ? f.pal : grayPal(f.pal));
+    var info = '<div class="pn">' + (st > 0 ? f.name : '？？？') + '</div><div class="ps">';
+    if(st === 0){
+      info += '还没见过<br><span style="color:#566a82">' + f.tip + '</span>';
+    } else {
+      info += '<span class="st' + st + '">' + PET_STAGENAME[st] + '</span> · 已救 ' + n + ' 只';
+      if(st < 3) info += '<br>再答对 ' + (PET_STAGE[st] - n) + ' 题进化' + PET_STAGENAME[st+1];
+      else info += '<br>开局送 1 个护盾';
+    }
+    info += '</div>';
+    var dv = document.createElement('div');
+    dv.innerHTML = info;
+    card.appendChild(dv);
+    g.appendChild(card);
+  });
+}
+
+function renderMap(){
+  var g = $('mapGrid');
+  g.innerHTML = '';
+  LEVELS.forEach(function(L, i){
+    var unlocked = i < save.unlocked;
+    var d = document.createElement('div');
+    d.className = 'lv' + (unlocked ? '' : ' lock');
+    var st = save.stars[i] || 0;
+    var s = '';
+    for(var k=0;k<3;k++) s += (k<st ? '★' : '☆');
+    d.innerHTML = '<div class="ico">' + L.icon + '</div>' +
+                  '<div class="n">第 ' + (i+1) + ' 关</div>' +
+                  '<div class="t">' + L.name + '</div>' +
+                  '<div class="t" style="color:#7fa3c9;font-size:10px">' + (L.play || '') + '</div>' +
+                  '<div class="s">' + s + '</div>';
+    if(unlocked){ d.onclick = function(){ startLevel(i); }; }
+    g.appendChild(d);
+  });
+}
+
+function startLevel(i){
+  hide('mapLayer'); hide('clearLayer'); hide('failLayer'); hide('planLayer');
+  tickDay();                        // 练手模式也算一天：到期宠物在这里也能回来
+  buildLevel(i);
+  G.phase = 'walk';
+  if(!actx){ try{ actx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} }
+}
+
+/* ============ 事件 ============ */
+$('btnToday').onclick = function(){
+  var di = nextDay();
+  if(di < 0){ renderPlan(); show('planLayer'); }
+  else startDay(di);
+};
+$('btnPlan').onclick = function(){ renderPlan(); show('planLayer'); };
+$('btnPlanStart').onclick = function(){ var di = nextDay(); if(di >= 0) startDay(di); };
+$('btnPlanClose').onclick = function(){ hide('planLayer'); };
+$('btnReport').onclick = function(){ renderReport(); show('reportLayer'); };
+$('btnReportClose').onclick = function(){ hide('reportLayer'); };
+$('btnPets').onclick = function(){ renderPets(); show('petLayer'); };
+$('btnPetsClose').onclick = function(){ hide('petLayer'); };
+$('btnPets2').onclick = function(){ renderPets(); show('petLayer'); };
+$('btnPets3').onclick = function(){ renderPets(); show('petLayer'); };
+$('btnMap').onclick = function(){
+  if(G.autoT){ clearTimeout(G.autoT); G.autoT = null; }
+  hide('qcard'); G.answered = true; renderMap(); show('mapLayer'); G.phase = 'idle';
+};
+$('btnHelp').onclick = function(){ show('helpLayer'); };
+$('btnHelpClose').onclick = function(){ hide('helpLayer'); };
+$('btnNext').onclick = function(){
+  hide('clearLayer');
+  if(G.mode === 'plan'){ renderPlan(); show('planLayer'); }
+  else if(G.li < LEVELS.length-1) startLevel(G.li+1);
+  else { renderMap(); show('mapLayer'); }
+};
+$('btnRetry').onclick = function(){ hide('clearLayer'); if(G.mode==='plan') startDay(G.day); else startLevel(G.li); };
+$('btnBack').onclick = function(){ hide('clearLayer'); renderMap(); show('mapLayer'); };
+$('btnRetry2').onclick = function(){ hide('failLayer'); if(G.mode==='plan') startDay(G.day); else startLevel(G.li); };
+$('btnBack2').onclick = function(){ hide('failLayer'); renderMap(); show('mapLayer'); };
+$('btnSound').onclick = function(){
+  soundOn = !soundOn;
+  this.textContent = soundOn ? '🎵 开' : '🎵 关';
+};
+
+document.addEventListener('keydown', function(e){
+  // 跑动中：左右控制方向
+  if(G.phase === 'walk' && (e.code === 'ArrowLeft' || e.code === 'KeyA')){
+    held.l = true; syncDir(); e.preventDefault(); return;
+  }
+  if(G.phase === 'walk' && (e.code === 'ArrowRight' || e.code === 'KeyD')){
+    held.r = true; syncDir(); e.preventDefault(); return;
+  }
+  // 跑动中：跳跃（空格 / ↑ / W）
+  if(G.phase === 'walk' && (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW')){
+    tryJump(); e.preventDefault(); return;
+  }
+  if(G.phase !== 'question') return;
+  var q = G.qs[G.idx];
+  if(!q) return;
+  if(q.t === 'c'){
+    var n = parseInt(e.key, 10);
+    if(n >= 1 && n <= q.opts.length){ answer(n-1); }
+  } else {
+    if(/^[0-9]$/.test(e.key)){ if(G.typed.length < 8) G.typed += e.key; renderAnswer(); }
+    else if(e.key === 'Backspace'){ G.typed = G.typed.slice(0,-1); renderAnswer(); }
+    else if(e.key === 'Enter'){ submitNum(); }
+  }
+});
+document.addEventListener('keyup', function(e){
+  if(e.code === 'ArrowLeft' || e.code === 'KeyA'){ held.l = false; syncDir(); }
+  if(e.code === 'ArrowRight' || e.code === 'KeyD'){ held.r = false; syncDir(); }
+  if(e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW') endJump();
+});
+window.addEventListener('blur', function(){ releaseAll(); });
+
+/* ---- 屏幕方向键：按住走，松手停 ---- */
+function holdBtn(el, side){
+  var press = function(ev){
+    if(ev && ev.cancelable && ev.preventDefault) ev.preventDefault();
+    if(ev && ev.pointerId != null && el.setPointerCapture){
+      try{ el.setPointerCapture(ev.pointerId); }catch(e){}
+    }
+    held[side] = true; syncDir(); el.classList.add('on');
+  };
+  var lift = function(ev){
+    if(ev && ev.cancelable && ev.preventDefault) ev.preventDefault();
+    held[side] = false; el.classList.remove('on'); syncDir();
+  };
+  el.addEventListener('pointerdown', press);
+  el.addEventListener('pointerup', lift);
+  el.addEventListener('pointercancel', lift);
+  el.addEventListener('pointerleave', lift);
+  if(!window.PointerEvent){
+    el.addEventListener('touchstart', press, {passive:false});
+    el.addEventListener('touchend', lift, {passive:false});
+    el.addEventListener('touchcancel', lift, {passive:false});
+  }
+  el.addEventListener('contextmenu', function(e){ e.preventDefault(); });
+}
+holdBtn($('btnLeft'), 'l');
+holdBtn($('btnRight'), 'r');
+
+var jb = $('btnJump');
+var jPress = function(ev){
+  if(ev && ev.cancelable && ev.preventDefault) ev.preventDefault();
+  jb.classList.add('on'); tryJump(true);
+};
+var jLift = function(ev){
+  if(ev && ev.cancelable && ev.preventDefault) ev.preventDefault();
+  jb.classList.remove('on'); endJump();
+};
+jb.addEventListener('pointerdown', jPress);
+jb.addEventListener('pointerup', jLift);
+jb.addEventListener('pointercancel', jLift);
+jb.addEventListener('pointerleave', jLift);
+if(!window.PointerEvent){
+  jb.addEventListener('touchstart', jPress, {passive:false});
+  jb.addEventListener('touchend', jLift, {passive:false});
+}
+jb.addEventListener('contextmenu', function(e){ e.preventDefault(); });
+
+// 点击 / 触屏跳跃（点一下 = 完整一跳）
+var cvTapT = null;
+function tapJump(){
+  tryJump(true);
+  if(cvTapT) clearTimeout(cvTapT);
+  cvTapT = setTimeout(endJump, 320);
+}
+cv.addEventListener('mousedown', tapJump);
+cv.addEventListener('touchstart', function(ev){ ev.preventDefault(); tapJump(); }, {passive:false});
+
+/* ============ 启动 ============ */
+renderMap();
+buildLevel(0);
+G.phase = 'idle';
+requestAnimationFrame(loop);
+
+})();
+</script>
+</body>
+</html>
