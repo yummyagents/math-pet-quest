@@ -2,9 +2,10 @@
 
 一个给三年级孩子练计算与算理的像素闯关小游戏。**纯静态单页，无需构建、无需服务器、无外部依赖**，丢到 GitHub Pages 上就能玩。
 
-- 五关五种场景与玩法：水晶洞窟（碰水晶）→ 火山熔炉（踩泡泡）→ 沙漠神殿（跳够神灯）→ 机械工坊（顶齿轮箱）→ 夜晚城堡（BOSS 三连战）
-- 答对救出宠物，收进 8 族图鉴；完全体宠物给护盾
-- 1-3-7 复习阶梯：答对的题隔 1 天、3 天、7 天再考一次，连过三轮才算真会
+- 五关五种场景、玩法、地形：水晶洞窟（碰水晶、石笋台）→ 火山熔炉（踩泡泡、玄武岩桥）→ 沙漠神殿（跳够神灯、浮空沙岩）→ 机械工坊（顶齿轮箱、木箱堆）→ 夜晚城堡（BOSS 三连战、悬浮石板）
+- 每关一首快节奏 8-bit 背景音乐（程序化生成，无音频文件），右上角 🎵 一键开关，关了会记住偏好
+- 答对救出宠物，收进 8 族图鉴；完全体宠物给护盾；图鉴里点哪只宠物，哪只就跟着闯关（解锁新宠后随时换回）
+- 1-3-7 复习阶梯：答错的题隔 1 天、3 天、7 天回来三次，连过三轮才算救回
 - 进度保存在浏览器本地（localStorage），不上传任何数据
 
 ## 文件说明
@@ -12,9 +13,9 @@
 | 文件 | 用途 | 必需 |
 |---|---|---|
 | `index.html` | 游戏本体（首页） | ✅ |
-| `题库总览.html` | 给家长看的题库与玩法说明页 | 可选 |
+| `guide.html` | 给家长看的题库与玩法说明页 | 可选 |
 | `.nojekyll` | 关闭 Jekyll 处理，避免 Pages 忽略特殊文件名 | ✅ 建议保留 |
-| `可选-GitHub-Actions/pages.yml` | 想用 Actions 部署时用，默认不需要 | 可选 |
+| `github-actions-optional/pages.yml` | 想用 Actions 部署时用，默认不需要 | 可选 |
 
 > `.nojekyll` 是个空文件，在 Finder 里默认看不到（按 `Cmd+Shift+.` 显示隐藏文件）。用网页上传时如果拖不进去，可以跳过它——本仓库没有 `_` 开头的目录，影响不大。
 
@@ -27,7 +28,7 @@
    - 可见性选 **Public**（Pages 免费版要求公开仓库）
    - 勾选 **Add a README file** → Create repository
 2. 进入仓库 → **Add file → Upload files**
-   - 把本目录里的 `index.html`、`题库总览.html`、`.nojekyll` 一起拖进去
+   - 把本目录里的 `index.html`、`guide.html`、`.nojekyll` 一起拖进去
    - 底部 **Commit changes**
 3. 仓库页 → **Settings → Pages**
    - **Source** 选 `Deploy from a branch`
@@ -63,7 +64,7 @@ git push -u origin main
 
 ```bash
 mkdir -p .github/workflows
-cp 可选-GitHub-Actions/pages.yml .github/workflows/pages.yml
+cp github-actions-optional/pages.yml .github/workflows/pages.yml
 git add .github && git commit -m "add pages workflow" && git push
 ```
 

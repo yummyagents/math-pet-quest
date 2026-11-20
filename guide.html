@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>三年级数学闯关 · 错题库与题库 v3</title>
+<style>
+:root{
+  --ink:#1b2330; --ink2:#4a5568; --ink3:#7b8794;
+  --paper:#fbf8f1; --line:#e3dccd;
+  --red:#c0392b; --amber:#b7791f; --green:#2f7d4f; --blue:#1e5f8a;
+}
+*{box-sizing:border-box}
+body{margin:0;background:#efe9dc;color:var(--ink);
+  font:15px/1.85 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif;}
+.page{max-width:900px;margin:0 auto;background:var(--paper);box-shadow:0 2px 24px rgba(0,0,0,.09);}
+.cover{padding:54px 56px 40px;background:linear-gradient(160deg,#1b2330,#2c3a52 60%,#3a4a66);color:#fff;}
+.cover .kicker{font-size:12px;letter-spacing:6px;color:#8fa8cc;margin-bottom:18px}
+.cover h1{margin:0 0 10px;font-size:34px;letter-spacing:1px;font-weight:800}
+.cover .sub{color:#c3cfe0;font-size:15px}
+.stats{display:flex;gap:12px;margin-top:30px;flex-wrap:wrap}
+.stat{flex:1;min-width:100px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);border-radius:4px;padding:12px 14px}
+.stat b{display:block;font-size:24px;color:#ffd166}
+.stat span{font-size:12px;color:#9fb0c6}
+.body{padding:44px 56px 60px}
+h2{font-size:20px;margin:44px 0 6px;padding-bottom:10px;border-bottom:2px solid var(--ink);display:flex;align-items:baseline;gap:10px}
+h2 .no{font-size:13px;color:var(--ink3);letter-spacing:2px;font-weight:600}
+h3{font-size:16px;margin:28px 0 8px;color:var(--ink)}
+p{margin:10px 0;color:var(--ink2)}
+.lead{color:var(--ink2);font-size:14px;margin:6px 0 18px}
+table{width:100%;border-collapse:collapse;margin:14px 0 8px;font-size:14px;background:#fff}
+th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+th{background:#f2ecdd;font-weight:700;font-size:13px;color:var(--ink)}
+td.num{text-align:center;font-variant-numeric:tabular-nums;white-space:nowrap}
+tbody tr:nth-child(even){background:#fdfbf6}
+.q{display:flex;gap:14px;padding:13px 0;border-bottom:1px dashed var(--line)}
+.qn{flex:0 0 42px;font:700 12px/1.6 ui-monospace,Menlo,monospace;color:var(--ink3);padding-top:3px}
+.qb{flex:1;min-width:0}
+.qq{font-weight:600;font-size:15px;color:var(--ink)}
+.qo{font-size:15px;color:#2d6a9f;margin-top:2px}
+.qa{margin-top:5px;font-size:14px}
+.qa b{display:inline-block;background:#e8f5ec;color:var(--green);font-size:11px;padding:1px 7px;border-radius:3px;margin-right:8px;letter-spacing:1px}
+.qs{margin-top:6px;font-size:13.5px;line-height:1.8;color:#5a6472;background:#f7f4ec;border-left:3px solid #ddd3bd;padding:8px 12px;border-radius:0 3px 3px 0}
+.pill{display:inline-block;font-size:11px;padding:2px 9px;border-radius:11px;letter-spacing:1px;font-weight:700;vertical-align:2px}
+.p-red{background:#fdeaea;color:var(--red)}
+.p-amber{background:#fdf3e0;color:var(--amber)}
+.p-gray{background:#eef1f4;color:#5b6979}
+.p-green{background:#e8f5ec;color:var(--green)}
+.fixbox{border:1px solid var(--line);border-left:5px solid var(--green);background:#fff;padding:16px 20px;margin:16px 0;border-radius:0 4px 4px 0}
+.fixbox h4{margin:0 0 6px;font-size:15.5px}
+.ev{font-size:13px;background:#f7f4ec;padding:8px 12px;border-radius:3px;margin:8px 0;font-family:ui-monospace,Menlo,monospace;color:#5a6472}
+.toc{background:#fff;border:1px solid var(--line);padding:18px 24px;margin:24px 0;border-radius:4px;columns:2;column-gap:32px}
+.toc a{display:block;color:var(--ink2);text-decoration:none;font-size:14px;padding:3px 0;border-bottom:1px dotted #e8e2d4;break-inside:avoid}
+.toc a span{color:var(--ink3);font-size:12px;margin-right:8px}
+.meta{font-size:12px;color:var(--ink3);border-top:1px solid var(--line);padding-top:14px;margin-top:36px}
+@media print{
+  body{background:#fff} .page{box-shadow:none;max-width:none}
+  .body{padding:24px 0} .cover{padding:30px 0}
+  h2{page-break-after:avoid} .q,.fixbox{page-break-inside:avoid}
+}
+</style>
+</head>
+<body><div class="page">
+
+<div class="cover">
+  <div class="kicker">错 题 库 · 动 作 分 解 · 题 库 v3</div>
+  <h1>他从哪里断的<br>我们就从哪里练</h1>
+  <div class="sub">把 23 个错点拆成 4 条动作，再让游戏练这 4 条动作 · 8 类题型 · 7 天 87 题</div>
+  <div class="stats">
+    <div class="stat"><b>23</b><span>错点总数</span></div>
+    <div class="stat"><b>4</b><span>条动作</span></div>
+    <div class="stat"><b>8</b><span>类题型</span></div>
+    <div class="stat"><b>87</b><span>7 天题量</span></div>
+    <div class="stat"><b>14</b><span>批改题</span></div>
+  </div>
+</div>
+
+<div class="body">
+
+<p class="lead">这一版只做一件事：把「他错了哪些题」换成「他在哪一步断掉」。错题本身会忘，动作会留下。文档顺序是：先看 23 个错点，再看它们归成的 4 条动作，最后看游戏里哪类题在练哪条动作。</p>
+
+<div class="toc">
+  <a href="#s1"><span>01</span>这版改了什么</a>
+  <a href="#s2"><span>02</span>错题库：乘法竖式的 7 处</a>
+  <a href="#s3"><span>03</span>错题库：两步题与顺序</a>
+  <a href="#s4"><span>04</span>错题库：读题与数字</a>
+  <a href="#s5"><span>05</span>错题库：自检与漏做</a>
+  <a href="#s6"><span>06</span>四条动作分解</a>
+  <a href="#s7"><span>07</span>游戏怎么对应训练</a>
+  <a href="#s8"><span>08</span>7 天课程表</a>
+  <a href="#s9"><span>09</span>新增：两步题六种结构</a>
+  <a href="#s10"><span>10</span>新增：批改题 14 道</a>
+  <a href="#s11"><span>11</span>验证记录</a>
+  <a href="#s12"><span>12</span>v4 · 宠物图鉴养成</a>
+  <a href="#s13"><span>13</span>v4.1 · 1-3-7 复习阶梯</a>
+  <a href="#s14"><span>14</span>v4.2 · 每关专属场景与玩法</a>
+</div>
+
+<h2 id="s1"><span class="no">01</span>这版改了什么</h2>
+<table>
+<thead><tr><th style="width:22%">项目</th><th style="width:38%">v2（上一版）</th><th>v3（现在）</th></tr></thead>
+<tbody>
+<tr><td>题型</td><td>六类：口诀、进位链、竖式、算理、判断、拆解</td><td><b>八类</b>，新增「两步题」和「批改找错」</td></tr>
+<tr><td>课程</td><td>每天六类，按知识点配比</td><td>每天八类，<b>按动作配比</b>：D2 打进位、D4 打两步、D5 打自检</td></tr>
+<tr><td>错题复习</td><td>原题重现（同一道题再出一次）</td><td><b>同类新题</b>：换一组数字、同一结构再来，测的是动作改没改，不是记没记住</td></tr>
+<tr><td>每日分析</td><td>按题型给正确率</td><td>题型之外再加<b>四条动作体检</b>：进位动作 / 两步动作 / 读题动作 / 自检动作</td></tr>
+<tr><td>题量</td><td>87 题</td><td>87 题（保持每天 12–15，只是换了成分）</td></tr>
+</tbody></table>
+
+<h2 id="s2"><span class="no">02</span>错题库 · 乘法竖式的 7 处（动作①）</h2>
+<p class="lead">这是最集中的一组：7 处错误落在同一个动作上——<b>乘完这一位，没有把进上来的数加进去</b>。</p>
+<table>
+<thead><tr><th style="width:6%">编号</th><th style="width:10%">来源</th><th style="width:14%">原题</th><th style="width:9%">他的答案</th><th style="width:8%">正确</th><th>错在第几步</th><th style="width:6%">动作</th></tr></thead>
+<tbody>
+<tr><td class="num">A1</td><td style="font-size:12px;color:#7b8794">原报告</td>
+  <td>78×5</td><td class="num" style="color:#c0392b">360</td><td class="num" style="color:#2f7d4f">390</td>
+  <td style="font-size:13px">十位 7×5＝35，应加个位进的 4 得 39；他写成 36，把「进 4」记成了「进 1」</td><td class="num"><b>①</b></td></tr>
+<tr><td class="num">A2</td><td style="font-size:12px;color:#7b8794">原报告</td>
+  <td>15×6</td><td class="num" style="color:#c0392b">80</td><td class="num" style="color:#2f7d4f">90</td>
+  <td style="font-size:13px">十位 1×6＝6，应加 3 得 9；他得 8，进 3 记成了进 2</td><td class="num"><b>①</b></td></tr>
+<tr><td class="num">A3</td><td style="font-size:12px;color:#7b8794">专项3 Q9</td>
+  <td>899×5</td><td class="num" style="color:#c0392b">895</td><td class="num" style="color:#2f7d4f">4495</td>
+  <td style="font-size:13px">十位 9×5＝45，应加个位进的 4 得 49；他只写出三位，整条高位链没走</td><td class="num"><b>①④</b></td></tr>
+<tr><td class="num">A4</td><td style="font-size:12px;color:#7b8794">专项3 Q7</td>
+  <td>8×128</td><td class="num" style="color:#c0392b">976</td><td class="num" style="color:#2f7d4f">1024</td>
+  <td style="font-size:13px">十位 2×8＝16，应加 6 得 22；976 恰好是 122×8，数字读错与漏加进位同时发生</td><td class="num"><b>①③</b></td></tr>
+<tr><td class="num">A5</td><td style="font-size:12px;color:#7b8794">8 格练习</td>
+  <td>6×238</td><td class="num" style="color:#c0392b">1388</td><td class="num" style="color:#2f7d4f">1428</td>
+  <td style="font-size:13px">十位 18 直接写 8 进 1，没加个位进的 4；百位 12＋1＝13，用的是 18 自己的进位</td><td class="num"><b>①</b></td></tr>
+<tr><td class="num">A6</td><td style="font-size:12px;color:#7b8794">8 格练习</td>
+  <td>354×7</td><td class="num" style="color:#c0392b">2458</td><td class="num" style="color:#2f7d4f">2478</td>
+  <td style="font-size:13px">十位 35 直接写 5 进 3，没加个位进的 2；百位 21＋3＝24，同样用了 35 自己的进位</td><td class="num"><b>①</b></td></tr>
+<tr><td class="num">A7</td><td style="font-size:12px;color:#7b8794">8 格练习</td>
+  <td>526×5</td><td class="num" style="color:#c0392b">2540</td><td class="num" style="color:#2f7d4f">2630</td>
+  <td style="font-size:13px">十位 2×5＝10 应加 3 得 13、写 3 进 1；他按 10 继续，百位 25＋1＝26 被压成 25</td><td class="num"><b>①</b></td></tr>
+</tbody></table>
+
+<h2 id="s3"><span class="no">03</span>错题库 · 两步题与顺序（动作②）</h2>
+<table>
+<thead><tr><th style="width:6%">编号</th><th style="width:10%">来源</th><th style="width:20%">原题</th><th style="width:10%">他的答案</th><th style="width:10%">正确</th><th>错在第几步</th><th style="width:6%">动作</th></tr></thead>
+<tbody>
+<tr><td class="num">B1</td><td style="font-size:12px;color:#7b8794">专项3 Q7</td>
+  <td>8×72 与 8×128 后问「一共」</td><td class="num" style="color:#c0392b">答题 976</td><td class="num" style="color:#2f7d4f">1600</td>
+  <td style="font-size:13px">两段都算了，但没有相加——「一共」没落到算式上</td><td class="num"><b>②③</b></td></tr>
+<tr><td class="num">B2</td><td style="font-size:12px;color:#7b8794">8 格练习</td>
+  <td>357＋(271－168)</td><td class="num" style="color:#c0392b">487</td><td class="num" style="color:#2f7d4f">460</td>
+  <td style="font-size:13px">括号里 103 算对；第二步 357＋103 写成 487，把 103 当成了 130</td><td class="num"><b>②</b></td></tr>
+<tr><td class="num">B3</td><td style="font-size:12px;color:#7b8794">8 格练习</td>
+  <td>438－129＋67</td><td class="num" style="color:#c0392b">371</td><td class="num" style="color:#2f7d4f">376</td>
+  <td style="font-size:13px">第一步 309 对；第二步 309＋67 算错，第二步没有重新对一遍</td><td class="num"><b>②</b></td></tr>
+<tr><td class="num">B4</td><td style="font-size:12px;color:#7b8794">原报告</td>
+  <td>36÷6÷2 与 36÷(6×2) 比大小</td><td class="num" style="color:#c0392b">未建立规则</td><td class="num" style="color:#2f7d4f">一样大</td>
+  <td style="font-size:13px">连续除以两个数等于除以它们的积，这条规则没建立，遇到就靠感觉</td><td class="num"><b>②</b></td></tr>
+</tbody></table>
+<p style="font-size:13.5px;color:#7b8794">这一组的共同点：<b>第一步往往是对的</b>。他把全部注意力放在第一步，算完就收笔——「还有第二步」只存在脑子里，一算完就清零了。</p>
+
+<h2 id="s4"><span class="no">04</span>错题库 · 读题与数字（动作③）</h2>
+<table>
+<thead><tr><th style="width:6%">编号</th><th style="width:10%">来源</th><th style="width:18%">原题</th><th style="width:11%">他的答案</th><th style="width:11%">正确</th><th>错在哪</th><th style="width:6%">动作</th></tr></thead>
+<tbody>
+<tr><td class="num">C1</td><td style="font-size:12px;color:#7b8794">专项3 Q8(2)</td>
+  <td>卖出 8 台，进价 230 元</td><td class="num" style="color:#c0392b">230×6</td><td class="num" style="color:#2f7d4f">1840（进价总额）</td>
+  <td style="font-size:13px">台数 8 抄成 6；且问的是「赚」，要用（368－230）×8＝1104</td><td class="num"><b>③</b></td></tr>
+<tr><td class="num">C2</td><td style="font-size:12px;color:#7b8794">专项3 Q8(2)</td>
+  <td>「共赚了多少钱」</td><td class="num" style="color:#c0392b">按进价算</td><td class="num" style="color:#2f7d4f">1104</td>
+  <td style="font-size:13px">「赚＝卖价－进价」这一步没建立，是本次唯一的新知识点缺口</td><td class="num"><b>③</b></td></tr>
+<tr><td class="num">C3</td><td style="font-size:12px;color:#7b8794">原报告</td>
+  <td>家到学校 650 米，中午回家吃饭</td><td class="num" style="color:#c0392b">只算 2 趟</td><td class="num" style="color:#2f7d4f">2600 米</td>
+  <td style="font-size:13px">往返趟数没数清：一天是 4 趟不是 2 趟</td><td class="num"><b>③</b></td></tr>
+<tr><td class="num">C4</td><td style="font-size:12px;color:#7b8794">原报告</td>
+  <td>12345×9＝111105，求 123456×9</td><td class="num" style="color:#c0392b">位数对不上</td><td class="num" style="color:#2f7d4f">1111104</td>
+  <td style="font-size:13px">规律题靠结构，位数没数清就套不上</td><td class="num"><b>③</b></td></tr>
+<tr><td class="num">C5</td><td style="font-size:12px;color:#7b8794">原报告</td>
+  <td>直尺读图（笔尖 0，笔尾 7.5cm）</td><td class="num" style="color:#c0392b">只写终点读数</td><td class="num" style="color:#2f7d4f">75 毫米</td>
+  <td style="font-size:13px">只看终点不看起点，或厘米毫米混着减</td><td class="num"><b>③</b></td></tr>
+<tr><td class="num">C6</td><td style="font-size:12px;color:#7b8794">原报告</td>
+  <td>单位填空（千米/米/毫米）</td><td class="num" style="color:#c0392b">量级判断错</td><td class="num" style="color:#2f7d4f">—</td>
+  <td style="font-size:13px">单位与量级没有建立对应，靠记</td><td class="num"><b>③</b></td></tr>
+<tr><td class="num">C7</td><td style="font-size:12px;color:#7b8794">观察记录</td>
+  <td>乘法连做之后的第一道加/减</td><td class="num" style="color:#c0392b">按乘法列式</td><td class="num" style="color:#2f7d4f">—</td>
+  <td style="font-size:13px">上一题的符号还在手上，新题的符号没有被重新读一遍</td><td class="num"><b>③</b></td></tr>
+</tbody></table>
+
+<h2 id="s5"><span class="no">05</span>错题库 · 自检与漏做（动作④）</h2>
+<table>
+<thead><tr><th style="width:6%">编号</th><th style="width:10%">来源</th><th style="width:18%">原题</th><th style="width:11%">他的答案</th><th style="width:11%">正确</th><th>错在哪</th><th style="width:6%">动作</th></tr></thead>
+<tbody>
+<tr><td class="num">D1</td><td style="font-size:12px;color:#7b8794">专项3 Q8(1)</td>
+  <td>冰箱价格 368×7</td><td class="num" style="color:#c0392b">整小题空白</td><td class="num" style="color:#2f7d4f">2576</td>
+  <td style="font-size:13px">漏做。题号打钩法没有执行，整套卷子少了一小题</td><td class="num"><b>④</b></td></tr>
+<tr><td class="num">D2</td><td style="font-size:12px;color:#7b8794">专项3 Q9</td>
+  <td>899×5</td><td class="num" style="color:#c0392b">895</td><td class="num" style="color:#2f7d4f">4495</td>
+  <td style="font-size:13px">放下笔时没有用量级核对：5 台近九百元的机器不可能只卖 895 元</td><td class="num"><b>④</b></td></tr>
+<tr><td class="num">D3</td><td style="font-size:12px;color:#7b8794">原报告</td>
+  <td>46×7</td><td class="num" style="color:#c0392b">282（未查出错）</td><td class="num" style="color:#2f7d4f">322</td>
+  <td style="font-size:13px">尾数法在这题失效（末位都是 2），必须靠估算才能发现</td><td class="num"><b>④</b></td></tr>
+<tr><td class="num">D4</td><td style="font-size:12px;color:#7b8794">原报告</td>
+  <td>整题漏做（多处）</td><td class="num" style="color:#c0392b">—</td><td class="num" style="color:#2f7d4f">—</td>
+  <td style="font-size:13px">题号旁没有画方框、做完没有打钩，漏了也发现不了</td><td class="num"><b>④</b></td></tr>
+<tr><td class="num">D5</td><td style="font-size:12px;color:#7b8794">原报告</td>
+  <td>2000 千米用什么交通工具</td><td class="num" style="color:#c0392b">判断错</td><td class="num" style="color:#2f7d4f">飞机</td>
+  <td style="font-size:13px">估算量级的能力没建立，只能靠印象</td><td class="num"><b>④</b></td></tr>
+</tbody></table>
+
+<h2 id="s6"><span class="no">06</span>四条动作分解</h2>
+
+<h3>动作①　进位没加　—　7 处，占全部错误的三成</h3>
+<p><b>它不是「忘」，是顺序里没有这一步。</b>用他自己的两道错题可以反推出落笔顺序：</p>
+<table>
+<thead><tr><th style="width:14%">题</th><th style="width:12%">他写的</th><th style="width:24%">十位写的是</th><th style="width:30%">百位写的是</th><th>说明</th></tr></thead>
+<tbody>
+<tr><td>354×7</td><td class="num">2458</td><td><b>5</b>（35 的个位）</td><td>24＝21＋<b>3</b>（35 自己的进位）</td><td>外面进上来的 2 从未参与运算</td></tr>
+<tr><td>6×238</td><td class="num">1388</td><td><b>8</b>（18 的个位）</td><td>13＝12＋<b>1</b>（18 自己的进位）</td><td>外面进上来的 4 从未参与运算</td></tr>
+</tbody></table>
+<p>也就是说，他的流程是：<b>算乘积 → 写本位 → 记住乘积自己的进位 → 进入下一位</b>。正确的流程是：<b>算乘积 → 加进上来的数 → 写本位、进新的一位</b>。差的不是记性，是这两件事的顺序和位置。</p>
+<div class="issue amber">
+<h4>因此游戏里怎么练</h4>
+<p class="fix">进位链（C）不给「18＋5」这种裸加法，一律带竖式语境：<b>「算 26×9，十位是 18 加个位进的 5，得（　）个十」</b>。裸加法他会直接当加法算，动作根本没发生。竖式（V）则把个位强制取 5–9，保证每道题都必然要加进位。</p>
+</div>
+
+<h3>动作②　两步只走一步　—　4 处</h3>
+<p>表现有两种：算式里明明有两步，写完第一步就收笔；或者两步之间数字没接稳（357＋103→487）。共同点是第一步往往正确，所以他自己检查时也看不出来。</p>
+<p><b>训练动作：</b>动笔前在题号旁写 ①②，做完一步打一个钩。钩没打满，题就没做完。这不是提醒，是把「还有第二步」从脑子里搬到纸上。</p>
+
+<h3>动作③　读题与数字搬运　—　7 处</h3>
+<p>台数 8 抄成 6、128 看成 122、乘法连做之后按乘法算加法——这些都发生在「从题目到算式」这一步，而不是计算本身。他的读题是「扫过去」，不是「读进去」。</p>
+<p><b>训练动作：</b>动笔前把运算符号抄到算式左边；读题时圈出数字和「一共 / 还剩 / 赚 / 平均」；列完式回头核对圈出来的数。</p>
+
+<h3>动作④　不自检与漏做　—　5 处</h3>
+<p>899×5 写成 895 却没觉得不对；冰箱那小题整道空白；46×7 写成 282 也查不出来。三个不同的现象，同一个原因：<b>他没有「检查」这个动作，只有「再看一遍」</b>。而「再看一遍」靠的是眼熟，眼熟恰恰查不出错。</p>
+<p><b>训练动作：</b>把检查变成两条固定动作——① 看还有没有没划掉的进位圈；② 用整十估算核量级。批改（X）这一类题就是为此加的：先学会认出「错长什么样」，才能查自己。</p>
+
+<h2 id="s7"><span class="no">07</span>游戏怎么对应训练</h2>
+<p class="lead">八类题型与四条动作不是一一对应，而是「主练」关系。判断标准只有一条：<b>这类题做错时，能直接指出是哪条动作断了。</b></p>
+<table>
+<thead><tr><th style="width:10%">题型</th><th style="width:8%">每天</th><th style="width:14%">主练动作</th><th>在练什么</th></tr></thead>
+<tbody>
+<tr><td><b>K 口诀</b></td><td class="num">1–2</td><td>③ 读题</td><td>表内乘法即时提取，两数限 2–9。它是所有乘法的原料，不是重点，但每天少量维持。</td></tr>
+<tr><td><b>C 进位链</b></td><td class="num">1–3</td><td>① 进位</td><td>把竖式里最易断的一步单独拎出来：本位乘积 + 低位进上来的数。题干自带竖式语境（算 26×9，十位是 18 加个位进的 5），不能当普通加法算。</td></tr>
+<tr><td><b>V 竖式</b></td><td class="num">1–4</td><td>① 进位</td><td>个位强制取 5–9，保证每一道都在练进位；D3 起三位数比例提到六成。</td></tr>
+<tr><td><b>M 两步题</b></td><td class="num">1–5</td><td>② 两步</td><td>脱式运算，六种结构都要求先写 ①②。这一类是为「只做一步」这个错因专门加的。</td></tr>
+<tr><td><b>X 批改</b></td><td class="num">1–3</td><td>④ 自检</td><td>给一个已经算错的答案，问他错在第几步。练的是自检：他检查不出来，是因为不知道错会长什么样。</td></tr>
+<tr><td><b>S 算理</b></td><td class="num">1</td><td>③ 读题</td><td>问「这一步在算几个几」，不要求算出结果。</td></tr>
+<tr><td><b>P 判断</b></td><td class="num">1</td><td>④ 自检</td><td>不计算先判断对错，专挑尾数法失效的题。</td></tr>
+<tr><td><b>D 拆解</b></td><td class="num">1</td><td>③ 读题</td><td>应用题，核心是拆：先问要走几趟、剩几袋、一套是什么。</td></tr>
+</tbody></table>
+<p><b>结算页怎么读：</b>除了题型正确率，下面多了一栏「四条动作体检」。哪条动作低于 85%，那一栏就会给出当天该补的动作——家长只需要看那一栏，不用自己判断。</p>
+
+<h2 id="s8"><span class="no">08</span>7 天课程表</h2>
+<p class="lead">七天不是按知识点排的，是按动作排的：先看清他在哪一步断（D1），再依次把进位、竖式、两步、自检各练透（D2–D5），最后混着来（D6）和毕业考（D7）。</p>
+<table>
+<thead><tr><th style="width:8%">天</th><th style="width:24%">主题</th>
+<th class="num" style="width:7%">K</th><th class="num" style="width:7%">C</th><th class="num" style="width:7%">V</th><th class="num" style="width:7%">M</th><th class="num" style="width:7%">X</th><th class="num" style="width:7%">S</th><th class="num" style="width:7%">P</th><th class="num" style="width:7%">D</th>
+<th class="num" style="width:8%">题量</th></tr></thead>
+<tbody>
+<tr><td class="num"><b>D1</b></td><td>先看清他在哪一步断</td>
+  <td class="num">2</td><td class="num">2</td><td class="num">2</td><td class="num">2</td><td class="num">1</td><td class="num">1</td><td class="num">1</td><td class="num">1</td>
+  <td class="num"><b>12</b></td></tr>
+<tr><td class="num"><b>D2</b></td><td>进位动作定型</td>
+  <td class="num">1</td><td class="num">3</td><td class="num">3</td><td class="num">1</td><td class="num">1</td><td class="num">1</td><td class="num">1</td><td class="num">1</td>
+  <td class="num"><b>12</b></td></tr>
+<tr><td class="num"><b>D3</b></td><td>竖式写得慢一点</td>
+  <td class="num">1</td><td class="num">2</td><td class="num">4</td><td class="num">1</td><td class="num">1</td><td class="num">1</td><td class="num">1</td><td class="num">1</td>
+  <td class="num"><b>12</b></td></tr>
+<tr><td class="num"><b>D4</b></td><td>两步题与顺序</td>
+  <td class="num">1</td><td class="num">1</td><td class="num">1</td><td class="num">5</td><td class="num">1</td><td class="num">1</td><td class="num">1</td><td class="num">1</td>
+  <td class="num"><b>12</b></td></tr>
+<tr><td class="num"><b>D5</b></td><td>当小老师查错</td>
+  <td class="num">1</td><td class="num">1</td><td class="num">2</td><td class="num">2</td><td class="num">3</td><td class="num">1</td><td class="num">1</td><td class="num">1</td>
+  <td class="num"><b>12</b></td></tr>
+<tr><td class="num"><b>D6</b></td><td>八类混着来</td>
+  <td class="num">2</td><td class="num">2</td><td class="num">2</td><td class="num">2</td><td class="num">1</td><td class="num">1</td><td class="num">1</td><td class="num">1</td>
+  <td class="num"><b>12</b></td></tr>
+<tr><td class="num"><b>D7</b></td><td>毕业考</td>
+  <td class="num">2</td><td class="num">2</td><td class="num">3</td><td class="num">3</td><td class="num">2</td><td class="num">1</td><td class="num">1</td><td class="num">1</td>
+  <td class="num"><b>15</b></td></tr>
+</tbody></table>
+<p style="font-size:13.5px;color:#7b8794">七天合计 87 题，其中批改题用掉 10 道（池里 14 道，留 4 道余量，重打一周不会撞题）。口诀、进位链、竖式、两步题是现场生成，用日期做种子：同一天重打是同一套，换一天自动换新。</p>
+
+<h2 id="s9"><span class="no">09</span>新增 · 两步题六种结构</h2>
+<p class="lead">六种结构轮着出，每一种的「易错」都指向两个真实错因：只做一步，或者顺序看错。</p>
+<table>
+<thead><tr><th style="width:6%">#</th><th style="width:22%">结构</th><th style="width:26%">样例</th><th class="num" style="width:10%">答案</th><th>练的是什么</th></tr></thead>
+<tbody>
+<tr><td class="num">1</td><td>（a ＋ b）÷ c</td><td><b>(35 ＋ 28) ÷ 3 = ?</b></td><td class="num">21</td><td style="font-size:13px">括号先算完再除；「括号被跳过」的直接训练</td></tr>
+<tr><td class="num">2</td><td>a ×（b ÷ c）</td><td><b>6 × (54 ÷ 9) = ?</b></td><td class="num">36</td><td style="font-size:13px">括号在乘号后面，也要先算括号</td></tr>
+<tr><td class="num">3</td><td>a －（b ＋ c）</td><td><b>642 － (187 ＋ 145) = ?</b></td><td class="num">310</td><td style="font-size:13px">减号后面跟括号，整块减；防「减一块再加一块」</td></tr>
+<tr><td class="num">4</td><td>a － b ＋ c</td><td><b>725 － 268 ＋ 139 = ?</b></td><td class="num">596</td><td style="font-size:13px">无括号从左往右；防「自己造括号」</td></tr>
+<tr><td class="num">5</td><td>a × b － c</td><td><b>486 × 3 － 42 = ?</b></td><td class="num">1416</td><td style="font-size:13px">先乘后减；防「算完乘法就收笔」</td></tr>
+<tr><td class="num">6</td><td>a × b ＋ c</td><td><b>398 × 3 ＋ 85 = ?</b></td><td class="num">1279</td><td style="font-size:13px">先乘后加；防「把后两数先加再乘」</td></tr>
+</tbody></table>
+<h3>一道两步题的完整讲解长什么样（以第 5 种为例）</h3>
+<div class="issue gray" style="border-left-color:#9aa7b6">
+<div class="ev">486 × 3 － 42 = ?</div>
+<div style="font-size:13.5px;color:#5a6472">思路：先乘后减，乘法那一块先算完整。步骤：① 486×3＝1458；② 1458－42＝1416。易错：算完乘法就收笔——两步题最常见的就是停在第一步。</div>
+</div>
+<p style="font-size:13.5px;color:#7b8794">讲解一律「思路 → 步骤（①②）→ 易错」三段。第二步用 ①② 写，是让孩子看到「原来这题本来就该有两次计算」。</p>
+
+<h2 id="s10"><span class="no">10</span>新增 · 批改题 14 道</h2>
+<p class="lead">每一道都是他自己的真实错题（数字不改），只把问题从「你算」换成「他错在哪」。这样他不需要再做一遍计算，注意力全部放在<b>找断点</b>上——这正是检查动作的核心。</p>
+<div class="q">
+  <div class="qn">X01</div>
+  <div class="qb">
+    <div class="qq">小马算 354×7，写成了 2458。他错在哪一步？</div>
+    <div class="qo">A. 个位 4×7＝28 算错了　B. 十位把 35 直接写下来，忘了加个位进的 2　C. 百位 3×7＝21 算错了　D. 积少写了一位</div>
+    <div class="qa"><b>答案</b>十位把 35 直接写下来，忘了加个位进的 2</div>
+    <div class="qs">思路：先看哪一位不对，再反推动作。步骤：正确是 2478，他写 2458，只差十位——十位应是 35＋2＝37 写 7，他写了 35 里的 5；再看百位 24＝21＋3，说明他连进位都用成了 35 自己的 3。易错：这看着像「写错一个数字」，其实是整条进位链断了一环。</div>
+  </div>
+</div>
+<div class="q">
+  <div class="qn">X02</div>
+  <div class="qb">
+    <div class="qq">238×6 写成了 1388，正确是 1428。错在哪？</div>
+    <div class="qo">A. 个位 8×6＝48 算错　B. 十位 3×6＝18 直接写 8 进 1，没加个位进的 4　C. 百位 2×6＝12 算错　D. 乘数 6 看成了 5</div>
+    <div class="qa"><b>答案</b>十位 3×6＝18 直接写 8 进 1，没加个位进的 4</div>
+    <div class="qs">思路：个位末位对不上就先查个位，对得上就查高位。步骤：末位都是 8，说明个位没错；十位应是 18＋4＝22 写 2 进 2，他写了 8 进 1——把「18 就写 8 进 1」当成了结果。易错：进位数字写在旁边却不参与运算，等于没写。</div>
+  </div>
+</div>
+<div class="q">
+  <div class="qn">X03</div>
+  <div class="qb">
+    <div class="qq">47×6 写成了 272，正确是 282。错在哪？</div>
+    <div class="qo">A. 个位 7×6＝42 是对的，十位 24＋4 算成了 27　B. 个位 7×6 算成了 32　C. 十位 4×6 算成了 26　D. 乘号看成了加号</div>
+    <div class="qa"><b>答案</b>个位 7×6＝42 是对的，十位 24＋4 算成了 27</div>
+    <div class="qs">思路：末位都是 2，个位没问题，错在十位。步骤：十位 4×6＝24，加个位进的 4 得 28，他写成 27，等于只加了 3。易错：进位少加 1，整题就少 10——这种错最难自己看出来。</div>
+  </div>
+</div>
+<div class="q">
+  <div class="qn">X04</div>
+  <div class="qb">
+    <div class="qq">438－129＋67，小明写成 371，正确是 376。错在哪一步？</div>
+    <div class="qo">A. 第一步 438－129 算错了　B. 第二步 309＋67 算错了　C. 应该先算 129＋67　D. 67 抄成了 62</div>
+    <div class="qa"><b>答案</b>第二步 309＋67 算错了</div>
+    <div class="qs">思路：两步题要一步一核对。步骤：438－129＝309 是对的；309＋67 应是 376，他写 371。易错：第一步对了就以为整题对了，第二步没再算一遍——这正是他上次在这题上丢分的地方。</div>
+  </div>
+</div>
+<div class="q">
+  <div class="qn">X05</div>
+  <div class="qb">
+    <div class="qq">357＋(271－168)，小明写成 487，正确是 460。错在哪？</div>
+    <div class="qo">A. 括号里 271－168 算错了　B. 第二步 357＋103 算错了　C. 应该先算 357＋271　D. 把加号看成了减号</div>
+    <div class="qa"><b>答案</b>第二步 357＋103 算错了</div>
+    <div class="qs">思路：括号先算，他这一步是对的。步骤：271－168＝103 正确；357＋103 应是 460，他写成 487，把 103 当成了 130。易错：第二步的数字搬错一位，答案就整个偏掉。</div>
+  </div>
+</div>
+<div class="q">
+  <div class="qn">X06</div>
+  <div class="qb">
+    <div class="qq">78×5 写成 360，正确是 390。最可能是哪种错？</div>
+    <div class="qo">A. 个位 8×5＝40 算错了　B. 十位 7×5＝35，加进位时把 4 记成了 1　C. 乘数 5 看成了 4　D. 末尾多写了一个 0</div>
+    <div class="qa"><b>答案</b>十位 7×5＝35，加进位时把 4 记成了 1</div>
+    <div class="qs">思路：差 30，正好是 3 个十，说明十位少加了 3 个十。步骤：正确十位 35＋4＝39；写成 36 就是 35＋1，进的 4 被记成了 1。易错：进位数字看一眼就忘，必须写下来并划掉确认。</div>
+  </div>
+</div>
+<div class="q">
+  <div class="qn">X07</div>
+  <div class="qb">
+    <div class="qq">15×6 写成 80，正确是 90。错在哪？</div>
+    <div class="qo">A. 个位 5×6＝30 写 0 进 3 是对的　B. 十位 1×6＋3 算成了 6＋2　C. 乘数 6 看成了 5　D. 十位应该写 15</div>
+    <div class="qa"><b>答案</b>十位 1×6＋3 算成了 6＋2</div>
+    <div class="qs">思路：末位都是 0，个位没错。步骤：十位 1×6＝6，加进位的 3 得 9，他得 8——把进 3 记成了进 2。易错：差 10 的错，几乎都是进位记错一个数。</div>
+  </div>
+</div>
+<div class="q">
+  <div class="qn">X08</div>
+  <div class="qb">
+    <div class="qq">(63＋27)÷9 写成 63＋27÷9＝66。错在哪？</div>
+    <div class="qo">A. 除法算错了　B. 没有先算括号，先算了 27÷9　C. 63＋27 应该等于 80　D. 应该用乘法</div>
+    <div class="qa"><b>答案</b>没有先算括号，先算了 27÷9</div>
+    <div class="qs">思路：括号的作用就是「先算我」。步骤：正确是 (63＋27)÷9＝90÷9＝10；他先算 27÷9＝3，再加 63。易错：只要式子里有括号，第一步就必须是括号，没有例外。</div>
+  </div>
+</div>
+<div class="q">
+  <div class="qn">X09</div>
+  <div class="qb">
+    <div class="qq">745－268＋139，小明写成 745－(268＋139)。这样错在哪？</div>
+    <div class="qo">A. 没错，结果一样　B. 自己给后两个数加了括号，改变了运算顺序　C. 268＋139 算错了　D. 应该先加后减</div>
+    <div class="qa"><b>答案</b>自己给后两个数加了括号，改变了运算顺序</div>
+    <div class="qs">思路：式子里没有括号，就从左往右算。步骤：正确 745－268＝477，477＋139＝616；他加括号后变成 745－407＝338。易错：题里没有括号，绝不能自己造一个。</div>
+  </div>
+</div>
+<div class="q">
+  <div class="qn">X10</div>
+  <div class="qb">
+    <div class="qq">526×5，十位是 2×5＝10 加个位进的 3，应该怎么落笔？</div>
+    <div class="qo">A. 写 0 进 1　B. 写 3 进 1　C. 写 13 进 1　D. 写 3 进 3</div>
+    <div class="qa"><b>答案</b>写 3 进 1</div>
+    <div class="qs">思路：先把「乘积＋进位」算成一个数，再看怎么落笔。步骤：10＋3＝13，写 3 进 1；百位 5×5＝25，加 1 得 26。正确结果 2630。易错：写 0 进 1 就是只用乘积、把进位的 3 丢了。</div>
+  </div>
+</div>
+<div class="q">
+  <div class="qn">X11</div>
+  <div class="qb">
+    <div class="qq">算完一道三位数乘一位数，最该先查什么？</div>
+    <div class="qo">A. 把每个数字再抄一遍　B. 看有没有没划掉的进位圈，再用估算核量级　C. 数一数写了几行　D. 看字写得整不整齐</div>
+    <div class="qa"><b>答案</b>看有没有没划掉的进位圈，再用估算核量级</div>
+    <div class="qs">思路：检查要查最容易错的地方，而不是重做一遍。步骤：先把进位圈逐个划掉确认加过；再用整十估算核量级（539×7≈3780）。易错：整题重算既慢又容易复制同一个错误。</div>
+  </div>
+</div>
+<div class="q">
+  <div class="qn">X12</div>
+  <div class="qb">
+    <div class="qq">哪种做法最能防止「两步题只做了一步」？</div>
+    <div class="qo">A. 算快一点　B. 动笔前在题号旁写 ①②，做完一步打一个钩　C. 把题目多读一遍　D. 写在草稿纸边上</div>
+    <div class="qa"><b>答案</b>动笔前在题号旁写 ①②，做完一步打一个钩</div>
+    <div class="qs">思路：忘做第二步，是因为「还有一步」只记在脑子里。步骤：动笔前先写 ①②，等于把第二步写到纸上；做完一步打个钩，钩没打满就还没完。易错：靠「我会记得」——一算完注意力就清零了。</div>
+  </div>
+</div>
+<div class="q">
+  <div class="qn">X13</div>
+  <div class="qb">
+    <div class="qq">999×4 写成了 3966，正确是 3996。错在哪？</div>
+    <div class="qo">A. 个位 9×4＝36 算错　B. 十位 36 直接写 6 进 3，没加个位进的 3　C. 百位 9×4 算成了 36　D. 末尾多写一位</div>
+    <div class="qa"><b>答案</b>十位 36 直接写 6 进 3，没加个位进的 3</div>
+    <div class="qs">思路：三次进位都要加，逐位核。步骤：个位 36 写 6 进 3；十位应是 36＋3＝39 写 9 进 3，他写了 36 里的 6；百位 36＋3＝39。正确 3996。易错：连着几位都进位时，最容易在第二位开始「照抄乘积」。</div>
+  </div>
+</div>
+<div class="q">
+  <div class="qn">X14</div>
+  <div class="qb">
+    <div class="qq">小明算 306×4 得 1224，这道题到底对不对？</div>
+    <div class="qo">A. 对，没有错　B. 错，十位 0×4 漏了进位　C. 错，百位 3×4 算错了　D. 错，个位 6×4 算错了</div>
+    <div class="qa"><b>答案</b>对，没有错</div>
+    <div class="qs">思路：不要因为「有 0 看着别扭」就判错。步骤：个位 6×4＝24 写 4 进 2；十位 0×4＝0，加 2 得 2；百位 3×4＝12。结果 1224，完全正确。易错：中间有 0 时，孩子容易以为是错题；也容易在做题时把进位的 2 丢掉。</div>
+  </div>
+</div>
+
+<h2 id="s11"><span class="no">11</span>验证记录</h2>
+<table>
+<thead><tr><th style="width:34%">验证项</th><th style="width:20%">方法</th><th>结果</th></tr></thead>
+<tbody>
+<tr><td>七天全部能通关</td><td>模拟真实按键逐题作答</td><td>D1–D7 全部 clear，题量 12×6＋15，出题序号严格递增，八类全部出现</td></tr>
+<tr><td>两步题答案正确</td><td>600 次生成后按公式重算</td><td>0 处错误；六种结构分布均衡（96/98/110/106/99/91）</td></tr>
+<tr><td>批改题选项质量</td><td>逐题检查选项重复、答案越界</td><td>14 题全部通过，无重复选项</td></tr>
+<tr><td>走丢宠物同类重练</td><td>故意答错两步题，隔天再开</td><td>回来的是新数字、同类结构（如（35＋28）÷3 → （26＋42）÷4），标记为「同类新题」</td></tr>
+<tr><td>动作体检能显示</td><td>构造八类数据渲染结算页</td><td>四条动作条全部出现，低于 85% 时给出对应建议</td></tr>
+<tr><td>自由闯关不受影响</td><td>五关全通</td><td>5/5 clear，出题顺序不变（练手模式，不计入进度）</td></tr>
+<tr><td>宠物收集与进化</td><td>D1 全对后核对存档</td><td>答对 12 题 → 图鉴累计恰好 +12；8 族全部触发「幼年期」进化事件</td></tr>
+<tr><td>护盾与练手模式归属</td><td>构造 3 族完全体 / 开五关检查</td><td>开局护盾 = min(3, 完全体族数)；答错时血不变、护盾-1，耗尽后正常扣血；练手模式题目按关卡补 poolTag（K/C/S/P/D）</td></tr>
+</tbody></table>
+<p style="margin-top:16px"><b>怎么开始：</b>打开游戏 → 「今日训练」→ D1。每天打完看结算页最下面的「四条动作体检」，哪条低于 85%，就按那一行提示的动作练第二天。纸面配套是那三份《运算练习 D1–D3》和《做题动作卡》，三天的重点相同：只看动作，不看得数。</p>
+
+<h2 id="s12"><span class="no">12</span>v4 更新 · 宠物图鉴养成系统</h2>
+<p class="lead">出题触发从「踩史莱姆」升级为「收集养成」：路上飘的是<b>装着小宠物的泡泡</b>、巢里躺着<b>会晃的蛋</b>，答对=解救/孵化入图鉴。走路的玩法、题目顺序、弱项复习机制全部不变，只是给了孩子一个持续的目标——把 8 族宠物养到完全体。</p>
+<h3>8 族宠物 ↔ 8 类题</h3>
+<table>
+<thead><tr><th>宠物</th><th>对应题类</th><th>养成含义</th></tr></thead>
+<tbody>
+<tr><td>咕咕鸟</td><td>K 口诀</td><td rowspan="8">每答对 1 题，对应族 +1 只：<br>1 只 → 幼年期；5 只 → 成长期；12 只 → 完全体。<br>完全体宠物开局送护盾（上限 3 个），答错时替孩子挡一下、不掉血。<br>图鉴里最强的一只会跟在小主人身后跑，越大越强。</td></tr>
+<tr><td>进进猴</td><td>C 进位链</td></tr>
+<tr><td>笔笔龟</td><td>V 竖式</td></tr>
+<tr><td>双双狐</td><td>M 两步题</td></tr>
+<tr><td>校校猫</td><td>X 批改</td></tr>
+<tr><td>位位熊</td><td>S 算理</td></tr>
+<tr><td>估估鹿</td><td>P 判断</td></tr>
+<tr><td>步步龙</td><td>D 拆解</td></tr>
+</tbody></table>
+<p><b>设计意图：</b>按 7 天计划的题量，C/V/M/X 四族一周内可到完全体（约 11–15 题/族），K/S/P/D 需要练手模式补足——正好把「哪个动作弱就多练哪关」变成孩子自己看得见、追得着的进度条。答错的题变成「走丢的宠物」隔天回来，弱项复习的包装从任务变成了 reunion。</p>
+
+<h2 id="s13"><span class="no">13</span>v4.1 更新 · 1-3-7 复习阶梯</h2>
+<p class="lead">借鉴错题管理实践中的间隔复习节奏（1-3-7 / 艾宾浩斯式），把「答对一次就算救回」升级为<b>三轮制救援</b>：走丢的宠物要按第 1、3、7 天回来三次，<b>三轮全过才真正计入图鉴</b>。任何一轮答错，回到第 1 天重新排队。</p>
+<h3>规则</h3>
+<table>
+<thead><tr><th>轮次</th><th>回来时间</th><th>答对</th><th>答错</th></tr></thead>
+<tbody>
+<tr><td>第 1 轮</td><td>答错后隔 1 天</td><td>进入第 2 轮（宠物暂不入图鉴，界面显示「救援进度 1/3」）</td><td rowspan="3">回到第 1 轮，隔 1 天重新排队</td></tr>
+<tr><td>第 2 轮</td><td>第 1 轮过后隔 3 天</td><td>进入第 3 轮（救援进度 2/3）</td></tr>
+<tr><td>第 3 轮</td><td>第 2 轮过后隔 7 天</td><td><b>毕业</b>：宠物真正归队 +1（可能触发进化），不再回队列</td></tr>
+</tbody>
+</table>
+<ul>
+<li><b>同类新题不变</b>：三轮每一轮都是换数字的同类题，测动作不测记忆。</li>
+<li><b>日历天驱动</b>：复习间隔按自然日推进（跨计划/练手都成立），不再是「计划内第几天」——否则 +7 天的第三轮在 7 天计划里永远排不上。</li>
+<li><b>练手模式也参与救援</b>：到期的走丢宠物会出现在练手关卡里（最多 2 只），救援不依赖今日训练。</li>
+<li><b>弃局不丢宠物</b>：取出的宠物标记「占用」，答完才正式出队；中途退出或刷新页面，下一次开局自动归还队列。</li>
+<li><b>答对一次不再直接给宠物</b>：普通题答对照常 +1；救援题只有三轮全过才 +1——「救回来」必须真正稳定。</li>
+</ul>
+<h3>v4.1 验证记录</h3>
+<table>
+<thead><tr><th>检查项</th><th>方法</th><th>结果</th></tr></thead>
+<tbody>
+<tr><td>1-3-7 阶梯状态机</td><td>VM 沙箱逐日推进（假日历 T0→T11）</td><td>23/23 通过：答错入队 +1 天；三轮答对的 due 依次为 +3、+7；第 3 轮答对毕业不回队列、宠物恰好 +1；中途任何一轮答错打回第 1 轮</td></tr>
+<tr><td>救援中途不给宠物</td><td>第 1、2 轮答对后核对图鉴</td><td>图鉴计数不变，仅第 3 轮毕业时 +1</td></tr>
+<tr><td>弃局归还</td><td>取题后不开局作答、直接换关</td><td>占用标记自动清除，同一宠物下一局可再次取出，队列数量不变</td></tr>
+<tr><td>练手模式注入</td><td>有到期宠物时开练手关</td><td>关卡末尾带上到期宠物（最多 2 只），带 _review 标记与轮次</td></tr>
+<tr><td>旧存档迁移</td><td>构造旧档（due=计划第几天、lvl 最高 4）</td><td>daySeq 按计划进度换算，lvl 压回 3 轮以内，不丢数据</td></tr>
+<tr><td>D1-D7 主流程回归</td><td>模拟逐题作答</td><td>6/6 通过：七天全 clear（总题数 87）、八类齐全、答错入队、护盾正常、五关练手正常</td></tr>
+</tbody>
+</table>
+
+<h2 id="s14"><span class="no">14</span>v4.2 更新 · 每关专属场景与玩法</h2>
+<p class="lead">五关不再共用同一张地图和同一套动作：每关有<b>专属像素场景</b>和<b>专属触发玩法</b>，7 天计划的场景/玩法也会按天轮换，避免「关关都一样」的枯燥感。</p>
+<table>
+<thead><tr><th>关卡</th><th>场景</th><th>玩法（触发动作）</th><th>对应训练</th></tr></thead>
+<tbody>
+<tr><td>第 1 关 口诀洞窟</td><td>水晶洞窟（钟乳石、发光水晶、萤光苔）</td><td><b>走碰水晶</b>：走到水晶跟前自动出题，节奏最快，贴合口诀「一秒报答案」</td><td>附录 A · 提取速度</td></tr>
+<tr><td>第 2 关 进位熔炉</td><td>火山熔炉（火山口辉光、火星、熔岩裂缝）</td><td><b>跳踩火苗泡泡</b>：跳起来踩破泡泡</td><td>3.2 · 乘积＋进位</td></tr>
+<tr><td>第 3 关 算理神殿</td><td>沙漠神殿（金字塔、月亮、石柱火把）</td><td><b>跳够浮空神灯</b>：必须跳到空中够到吊在气球下的灯笼，跑过头算错过</td><td>3.3 · 位值含义</td></tr>
+<tr><td>第 4 关 检查工坊</td><td>机械工坊（吊灯、货架、转动齿轮、木地板）</td><td><b>顶齿轮箱</b>：从下面顶木架上的铁皮齿轮箱</td><td>3.4 · 检查两把刀</td></tr>
+<tr><td>第 5 关 终局城堡</td><td>夜晚城堡（星空、月亮、塔楼旗帜、枯树火把）</td><td><b>混合玩法 + BOSS 三连战</b>：前段泡泡/箱子混着来，最后 3 题是大守卫 BOSS，跳到它头上打 3 次，打完倒下</td><td>3.5 · 多步任务</td></tr>
+</tbody>
+</table>
+<ul>
+<li><b>7 天计划轮换</b>：D1 洞窟碰水晶 → D2 火山踩泡泡 → D3 神殿够神灯 → D4 工坊顶箱子 → D5 城堡打 BOSS → D6/D7 继续轮换，每天进游戏看到的都不一样。</li>
+<li><b>校门统一改为 GOAL 终点大门</b>：题目没答完门前补题的规则不变。</li>
+<li><b>救援/图鉴/护盾规则完全不变</b>：所有玩法最终都是「答对救出宠物」，1-3-7 三轮毕业才计入图鉴。</li>
+</ul>
+<h3>v4.2 验证记录</h3>
+<table>
+<thead><tr><th>检查项</th><th>方法</th><th>结果</th></tr></thead>
+<tbody>
+<tr><td>五关玩法构成</td><td>VM 冒烟测试逐关开局</td><td>41/41 通过：crystal 12 水晶 / bubble 6 泡泡+6 蛋巢 / lantern 8 神灯 / gear 10 齿轮箱 / boss 覆盖最后 3 题且血量 3</td></tr>
+<tr><td>水晶触发</td><td>模拟走到水晶跟前跑一帧</td><td>自动出题、水晶标记已用、题号前进</td></tr>
+<tr><td>神灯触发/漏过</td><td>分别模拟空中碰到、地面跑过</td><td>空中碰到出题；跑过作废顺延并提示「没够到」</td></tr>
+<tr><td>BOSS 三连战</td><td>模拟跳踩→答对→继续 ×3</td><td>每跳一次触发一题，3 次后 BOSS 倒下</td></tr>
+<tr><td>五场景渲染</td><td>光栅化桩输出 BMP→PNG 逐张目检</td><td>洞窟/火山/神殿/工坊/城堡五张画面构图正确、配色区分明显、无元素错位</td></tr>
+<tr><td>旧机制回归</td><td>重跑 sim7 / sim8</td><td>23/23 + 6/6 全部通过，1-3-7 阶梯与 D1-D7 主流程无回归</td></tr>
+</tbody>
+</table>
+
+<div class="meta">
+文档由游戏源码直接生成（题型、课程、批改题均为运行中的真实数据），错题库来自原报告、《解决问题专项 3》与 8 格练习页的逐题核对。<br>
+一处更正：专项 3 第 12 题(2) 算式与答句均为 790，判为正确，此前的「算式与答句不一致」结论已撤销。
+</div>
+
+</div></div></body></html>

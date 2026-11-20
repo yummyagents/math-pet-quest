@@ -47,7 +47,8 @@
   }
   #hud .sc::before{content:'SCORE ';}
   #hud .sc{color:#ffd166}
-  #hud .sp{margin-left:auto;display:flex;gap:8px;pointer-events:auto}
+  #hud .sp{margin-left:auto;display:flex;gap:8px;pointer-events:auto;
+    position:relative;z-index:30}  /* 浮在地图/图鉴/答题卡等所有覆盖层之上：游戏一打开就能按到声音开关 */
   .iconbtn{
     pointer-events:auto;cursor:pointer;border:3px solid #2b1a08;background:rgba(43,26,8,.85);
     color:#ffd166;font-size:13px;font-weight:900;padding:4px 10px;font-family:"Courier New",monospace;
@@ -212,6 +213,8 @@
   .petcard .ps .st1{color:#9fd8ff}
   .petcard .ps .st2{color:#5ee7ff}
   .petcard .ps .st3{color:#ffd166}
+  .petcard.fav{border-color:#ffd166;box-shadow:0 0 0 2px rgba(255,209,102,.45),0 0 14px rgba(255,209,102,.35)}
+  .petcard:not(.fav):hover{border-color:#5ee7ff}
   @media (max-width:640px){ .petgrid{grid-template-columns:repeat(2,1fr)} }
   @media (max-width:640px){
     #qcard{top:40px;bottom:12px;width:95%}
@@ -261,6 +264,7 @@
       <div class="petgrid" id="petGrid"></div>
       <p><b>怎么收：</b>每关的玩法不同——碰水晶、踩泡泡、够神灯、顶齿轮箱、打 BOSS，但目的都一样：<b>答对就救出一只宠物</b>（或孵出一颗蛋），收进图鉴。</p>
       <p><b>怎么养：</b>每答对一道对应的题，那只族就 +1。<b>1 只 → 幼年期，5 只 → 成长期，12 只 → 完全体</b>。完全体越大只，跟在你身后的队宠也越大。</p>
+      <p><b>带谁出门自己挑：</b>点一下任何已解锁的宠物，它就会跟着你闯关——解锁了新宠物之后，也随时可以点回去换成原来那只最喜欢的，金框 + 「★ 随行中」就是现在带的那只。</p>
       <p><b>护盾：</b>每只<b>完全体</b>宠物，开局送 1 个护盾（最多 3 个）。答错时护盾替你挡一下，<b>不掉血</b>——养宠物的回报就体现在这里。</p>
       <p>答错的题会变成「走丢的宠物」，按 <b>1-3-7 天</b>回来三次：任何一轮答对都算救援进度，但只有<b>三轮全过</b>它才真正计入图鉴；中间任何一次答错，回到第 1 天重新排队。</p>
       <div class="row"><button class="pbtn" id="btnPetsClose">收好图鉴</button></div>
@@ -274,7 +278,9 @@
       <div class="map" id="mapGrid"></div>
       <p>怎么走：<b>按住 ▶ 前进、◀ 后退</b>，松手就站住（键盘 → ← 或 D / A）；<b>轻点跳得矮，按住跳得高</b>（空格 / ↑ / W / 「跳」）。</p>
       <p>怎么出题：<b>每关的玩法都不一样</b>——第 1 关<b>走过去碰亮着的水晶</b>；第 2 关<b>跳起来踩破火苗泡泡</b>；第 3 关<b>跳到空中够到浮空的神灯</b>；第 4 关<b>从下面顶齿轮箱</b>；第 5 关前半段泡泡和箱子混着来，<b>最后 3 题是一只大守卫 BOSS，跳到它头上打 3 次</b>。答对就能把那只宠物救出来/孵出来，收进图鉴。跳起来时脚下有<b>落点标记</b>，对准目标会变绿。</p>
-      <p>宠物图鉴：<b>8 族宠物对应 8 类题</b>（口诀鸟、进位猴、竖式龟、两步狐、批改猫、算理熊、判断鹿、拆解龙）。答对 1 只幼年期、5 只成长期、<b>12 只完全体</b>——完全体宠物开局送护盾，答错时替你挡一下不掉血。最厉害的宠物会跟在你身后一起跑。</p>
+      <p>每关都有<b>专属地形</b>：石笋台、玄武岩桥、浮空沙岩、木箱堆、悬浮石板——都能<b>跳上去站一站</b>，也能从下面跳穿过，跑跳的手感关关不同。</p>
+      <p>🎵 <b>音乐</b>：一打开游戏就有快节奏小曲（进关自动换曲），<b>右上角 🎵 按钮随时能按</b>——包括刚打开的地图页，关了下次进来也保持关闭。</p>
+      <p>宠物图鉴：<b>8 族宠物对应 8 类题</b>（口诀鸟、进位猴、竖式龟、两步狐、批改猫、算理熊、判断鹿、拆解龙）。答对 1 只幼年期、5 只成长期、<b>12 只完全体</b>——完全体宠物开局送护盾，答错时替你挡一下不掉血。你在图鉴里<b>点哪只宠物，哪只就跟在你身后</b>，解锁新宠后也随时能换回原来那只最喜欢的。</p>
       <p>漏了怎么办：撞到泡泡 / BOSS 只会被<b>顶回来</b>，可以再试；<b>漏掉的宠物不会丢</b>，会在终点大门前等你，答完题门才开。</p>
       <p>顺序永远不乱：每次踩中，出的都是「还没做的最前面那道题」。只有当前该处理的泡泡/蛋是醒着的（彩色、跳动、带感叹号），其他都在睡觉（灰色、Z 字），不用管。</p>
       <p style="margin-top:12px">终点校门：<b>规定数量的题全部答完，校门才打开</b>。没做完就跑到门口，门是锁着的，会在门前把剩下的题一道一道补完。答错扣血，血掉光重打本关。</p>
@@ -395,6 +401,86 @@ function sfxOk(){ beep(660,0.08,'square',0.05); setTimeout(function(){beep(990,0
 function sfxNo(){ beep(180,0.18,'sawtooth',0.05); }
 function sfxHit(){ beep(120,0.1,'square',0.06); }
 function sfxClear(){ [523,659,784,1046].forEach(function(f,i){ setTimeout(function(){beep(f,0.12,'square',0.05);}, i*110); }); }
+
+/* ============ 背景音乐：每关一首快节奏小循环（程序化生成，无外部文件） ============
+   曲子按关卡场景区分：洞窟轻快 C 大调 / 火山急促 E 小调 / 神殿神秘 D 多利亚 /
+   工坊顿挫 G 大调 / 城堡决战 A 和声小调。旋律 32 步循环 + 贝斯 + 底鼓噪声。 */
+var MUS = {
+  cave:    {bpm:168, root:57, wave:'square',
+            lead:[0,7,12,7, 9,7,4,0, 0,4,7,12, 9,7,4,0, 0,7,12,16, 14,12,9,7, 12,9,7,4, 7,4,0,-3],
+            bass:[0,null,7,null, 9,null,7,null, 0,null,7,null, 5,null,7,null]},
+  volcano: {bpm:176, root:52, wave:'sawtooth',
+            lead:[0,3,7,3, 0,3,8,7, 0,3,7,3, 10,8,7,3, 0,3,7,12, 10,8,7,3, 8,7,3,0, 3,0,-2,0],
+            bass:[0,null,0,null, 3,null,0,null, 0,null,0,null, -2,null,0,null]},
+  temple:  {bpm:160, root:50, wave:'triangle',
+            lead:[0,7,10,12, 10,7,5,3, 0,5,10,14, 12,10,7,5, 0,7,10,15, 14,12,10,7, 12,10,7,5, 3,5,7,0],
+            bass:[0,null,5,null, 7,null,5,null, 0,null,5,null, 3,null,5,null]},
+  workshop:{bpm:166, root:55, wave:'square',
+            lead:[0,4,7,4, 0,4,9,7, 0,4,7,4, 11,9,7,4, 0,5,9,12, 11,9,7,5, 9,7,5,4, 7,4,0,-5],
+            bass:[0,null,7,null, 0,null,5,null, 0,null,7,null, 4,null,5,null]},
+  castle:  {bpm:158, root:45, wave:'sawtooth',
+            lead:[0,3,7,8, 7,3,0,-2, 0,3,7,12, 11,8,7,3, 0,3,7,8, 12,11,8,7, 8,7,3,2, 3,0,-2,0],
+            bass:[0,null,0,2, 3,null,3,2, 0,null,0,2, -2,null,-2,2]}
+};
+var m2f = function(m){ return 440 * Math.pow(2, (m-69)/12); };
+var musicTimer = null, musicStep = 0, musicNext = 0, curTune = 'cave', noiseBuf = null;
+function ensureNoise(){
+  if(noiseBuf || !actx) return;
+  try{
+    noiseBuf = actx.createBuffer(1, Math.floor(actx.sampleRate*0.1), actx.sampleRate);
+    var d = noiseBuf.getChannelData(0);
+    for(var i=0;i<d.length;i++) d[i] = Math.random()*2-1;
+  }catch(e){}
+}
+function musicNote(f, t, dur, type, vol){
+  var o = actx.createOscillator(), g = actx.createGain();
+  o.type = type; o.frequency.value = f;
+  g.gain.setValueAtTime(vol, t);
+  g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+  o.connect(g); g.connect(actx.destination);
+  o.start(t); o.stop(t + dur + 0.02);
+}
+function musicHat(t){
+  if(!noiseBuf) return;
+  var s = actx.createBufferSource(), g = actx.createGain();
+  s.buffer = noiseBuf;
+  g.gain.setValueAtTime(0.018, t);
+  g.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
+  s.connect(g); g.connect(actx.destination);
+  s.start(t); s.stop(t + 0.06);
+}
+function musicSchedule(){
+  if(!actx || !soundOn || actx.state !== 'running') return;
+  var m = MUS[curTune] || MUS.cave;
+  var spb = 60 / m.bpm / 2;               // 八分音符一步
+  if(musicNext < actx.currentTime - 0.3){ // 标签页切走又回来：跳过停摆的段落
+    musicNext = actx.currentTime + 0.05;
+  }
+  while(musicNext < actx.currentTime + 0.18){
+    var st = musicStep % m.lead.length;
+    if(m.lead[st] != null) musicNote(m2f(m.root + m.lead[st]), musicNext, spb*0.85, m.wave, 0.026);
+    if(st % 2 === 0){
+      var bi = (st/2) % m.bass.length;
+      if(m.bass[bi] != null) musicNote(m2f(m.root + m.bass[bi] - 24), musicNext, spb*1.7, 'triangle', 0.055);
+    } else {
+      musicHat(musicNext);
+    }
+    musicNext += spb; musicStep++;
+  }
+}
+function startMusic(tune){
+  if(tune) curTune = tune;
+  if(!soundOn) return;
+  try{
+    if(!actx) actx = new (window.AudioContext||window.webkitAudioContext)();
+    if(actx.state === 'suspended') actx.resume();
+  }catch(e){ return; }
+  ensureNoise();
+  if(musicTimer) return;                  // 定时器已在跑：只换曲子，无缝切换
+  musicNext = actx.currentTime + 0.08;
+  musicTimer = setInterval(musicSchedule, 40);
+}
+function stopMusic(){ if(musicTimer){ clearInterval(musicTimer); musicTimer = null; } }
 
 /* ============ 精灵 ============ */
 // 小学生：红帽/红领巾 + 白校服 + 蓝书包
@@ -1409,6 +1495,8 @@ try{
   if(!save.box) save.box = [];
   if(!save.stats) save.stats = {};
   if(!save.pets) save.pets = {};          // 宠物图鉴：{族id: {n: 答对数}}
+  if(save.sound == null) save.sound = true;   // 音乐/音效开关
+  /* save.fav：玩家自己挑的随行宠物（族 id）；没挑过就跟随最近救出的 */
   /* 1-3-7 阶梯迁移：旧存档的 due 是“计划第几天”，换算成日历天序号。
      旧 GAPS=[1,2,3,4] 时代 lvl 最高 4，统一压回 3 轮以内；lvl4 视为第 3 轮待过。 */
   if(save.daySeq == null){
@@ -1539,6 +1627,26 @@ function loadRun(qs, label, theme, slot, style){
               hit:0, hurt:0, dead:false, deadT:0};
   }
   G.doorX = G.worldLen - 140;
+  /* 每关专属地形：单向平台（可跳上、可穿过），让跑跳节奏关关不同。
+     h=离地高度（一跳最高约 128px，全部保证够得着）；不压住题目物件和 BOSS 区。 */
+  G.plats = [];
+  var PLAT_STYLE = {
+    crystal: {every:2, w:78, hs:[46,64,40,58]},   // 洞窟：石笋台，矮台节奏跳
+    bubble:  {every:2, w:78, hs:[74,96,62,88]},   // 火山：玄武岩桥，得跳着走
+    lantern: {every:2, w:78, hs:[56,104,78,50]},  // 神殿：两级浮空沙岩，够灯更顺
+    gear:    {every:3, w:78, hs:[50,98,72]},      // 工坊：木箱堆台阶
+    boss:    {every:3, w:78, hs:[64,90,76]}       // 城堡：悬浮石板，BOSS 区留平地
+  };
+  var pd = PLAT_STYLE[st] || PLAT_STYLE.bubble;
+  var bossLine = (st === 'boss') ? 460 + bossBase*280 : Infinity;
+  for(var k=0; k<G.qs.length-1; k++){
+    if(k % pd.every !== 0) continue;
+    /* 平台放在两个题目物件的正中间空档（物件间距 280，触发盒约 ±120），
+       保证站上去的整只小人不会横向碰进任何物件的触发范围 */
+    var pxx = 460 + k*280 + 105;
+    if(pxx + pd.w > G.doorX - 130 || pxx >= bossLine) continue;
+    G.plats.push({x:pxx, w:pd.w, h:pd.hs[k % pd.hs.length]});
+  }
   G.decors = [];
   for(var d=0; d<34; d++){
     G.decors.push({x: 120 + d*170 + (d*57%80), k: d%4});
@@ -1548,6 +1656,7 @@ function loadRun(qs, label, theme, slot, style){
     G.dust.push({x: Math.random()*V.w, y: 60+Math.random()*460, s: 1+Math.random()*2.5, v: 0.2+Math.random()*0.7});
   }
   hide('qcard');
+  startMusic((theme && theme.scene) || curTune);   // 进关换曲，无缝切换
   updateHUD();
 }
 
@@ -2346,10 +2455,21 @@ function drawHero(cam){
   ctx.restore();
 }
 
-// 图鉴里最厉害的宠物跟在小主人身后一起跑
+// 随行宠物：玩家在图鉴里自己挑的优先（save.fav），其次最近救出的，
+// 都不可用（还没解锁）时带任何已解锁的宠物里进化阶段最高的一只
+function followFam(){
+  var f = save.fav ? petFam(save.fav) : null;
+  if(f && petStage(f.id) > 0) return f;
+  f = save.lastPet ? petFam(save.lastPet) : null;
+  if(f && petStage(f.id) > 0) return f;
+  var best = null;
+  PETDEX.forEach(function(x){
+    if(petStage(x.id) > 0 && (!best || petStage(x.id) > petStage(best.id))) best = x;
+  });
+  return best;
+}
 function drawFollower(cam){
-  if(!save.lastPet) return;
-  var fam = petFam(save.lastPet);
+  var fam = followFam();
   if(!fam) return;
   var st = petStage(fam.id);
   if(st < 1) return;
@@ -2530,6 +2650,78 @@ function drawClearShow(){
   }
 }
 
+/* ---- 每关专属地形平台：可跳上去站着，也能从下面跳穿过 ---- */
+function drawPlats(cam){
+  for(var i=0;i<G.plats.length;i++){
+    var p = G.plats[i];
+    var x = p.x - cam;
+    if(x < -p.w - 60 || x > V.w + 60) continue;
+    var y = GROUND - p.h;
+    var scene = (G.theme && G.theme.scene) || 'cave';
+    ctx.fillStyle = 'rgba(0,0,0,.25)';
+    ctx.fillRect(x + 6, GROUND - 4, p.w - 8, 5);   // 影子提示落点
+    if(scene === 'workshop'){
+      // 木箱堆：两层板条箱
+      var half = p.h > 70;
+      ctx.fillStyle = '#8a6a3c'; ctx.fillRect(x, y, p.w, p.h);
+      ctx.fillStyle = '#a5824f';
+      for(var b=0; b<p.w; b+=18){ ctx.fillRect(x+b+2, y+3, 14, p.h-6); }
+      ctx.fillStyle = '#6d5230';
+      ctx.fillRect(x, y, p.w, 5); ctx.fillRect(x, y+p.h-5, p.w, 5);
+      ctx.fillRect(x, y+p.h/2-2, p.w, 4);
+      if(half){ ctx.fillStyle='#5c4426'; ctx.fillRect(x+6, y+p.h/2+4, p.w-12, 3); }
+    } else if(scene === 'volcano'){
+      // 玄武岩石桥：黑岩+橙缝，底下岩浆微光
+      ctx.fillStyle = '#221410'; ctx.fillRect(x, y, p.w, p.h);
+      ctx.fillStyle = '#39241a';
+      for(var v=0; v<p.w; v+=22){ ctx.fillRect(x+v+3, y+4, 16, p.h-10); }
+      var flick = 0.5 + Math.sin(G.t/10 + i)*0.3;
+      ctx.globalAlpha = flick;
+      ctx.fillStyle = '#ff5a1f';
+      ctx.fillRect(x+10, y+p.h-6, p.w-20, 3);
+      ctx.fillRect(x-4, y+p.h, p.w+8, 4);
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = '#0e0a08'; ctx.fillRect(x, y, p.w, 4);
+    } else if(scene === 'temple'){
+      // 浮空沙岩：金纹石板 + 底部悬浮粒子
+      ctx.fillStyle = '#b09454'; ctx.fillRect(x, y, p.w, p.h);
+      ctx.fillStyle = '#c9ad6c'; ctx.fillRect(x, y, p.w, 6);
+      ctx.fillStyle = '#8f7538';
+      for(var s2=0; s2<p.w; s2+=24){ ctx.fillRect(x+s2+4, y+10, 2, p.h-14); }
+      ctx.fillStyle = '#ffd166';
+      ctx.fillRect(x+p.w/2-8, y+Math.floor(p.h/2)-2, 16, 4);
+      var fl2 = (G.t*0.6 + i*31) % 14;
+      ctx.globalAlpha = 0.35;
+      ctx.fillStyle = '#e8d8a8';
+      ctx.fillRect(x+8, y+p.h+4+fl2, 3, 3);
+      ctx.fillRect(x+p.w-14, y+p.h+10-fl2, 3, 3);
+      ctx.globalAlpha = 1;
+    } else if(scene === 'castle'){
+      // 悬浮石板：深紫石砖，微微上下浮动
+      var bob = Math.sin(G.t/22 + i*1.7)*3;
+      ctx.fillStyle = '#3a2b56'; ctx.fillRect(x, y+bob, p.w, p.h);
+      ctx.fillStyle = '#4d3a6e'; ctx.fillRect(x, y+bob, p.w, 5);
+      ctx.fillStyle = '#2a1d3e';
+      for(var c3=0; c3<p.w; c3+=20){ ctx.fillRect(x+c3+2, y+bob+8, 16, p.h-12); }
+      ctx.globalAlpha = 0.5 + Math.sin(G.t/16+i)*0.2;
+      ctx.fillStyle = '#ff4d6d';
+      ctx.fillRect(x+p.w/2-3, y+bob-5, 6, 3);
+      ctx.globalAlpha = 1;
+    } else {
+      // 洞窟石笋台：蓝晶石台，顶面发亮
+      ctx.fillStyle = '#1d3c63'; ctx.fillRect(x, y, p.w, p.h);
+      ctx.fillStyle = '#2a5a8f'; ctx.fillRect(x, y, p.w, 6);
+      ctx.fillStyle = '#122a48';
+      for(var q2=0; q2<p.w; q2+=26){ ctx.fillRect(x+q2+4, y+9, 3, p.h-13); }
+      ctx.globalAlpha = 0.7 + Math.sin(G.t/13 + i)*0.3;
+      ctx.fillStyle = '#5ee7ff';
+      ctx.fillRect(x+8, y+1, p.w-16, 3);
+      ctx.fillRect(x+p.w/2-2, y+13, 4, 5);
+      ctx.globalAlpha = 1;
+    }
+  }
+}
+
 function render(){
   var th = G.theme || LEVELS[G.li].theme;
   var shakeX = G.shake > 0 ? (Math.random()-0.5)*10 : 0;
@@ -2537,6 +2729,7 @@ function render(){
   ctx.save();
   ctx.translate(shakeX, 0);
   drawBG(th, G.cam);
+  drawPlats(G.cam);
   drawDoor(G.cam, th);
   for(var i=0;i<G.blocks.length;i++) drawBlock(G.blocks[i], th, G.cam);
   for(var j=0;j<G.enemies.length;j++) drawEnemy(G.enemies[j], th, G.cam);
@@ -2606,19 +2799,45 @@ function updateFx(dt){
   if(G.popFx){ G.popFx.t += dt; if(G.popFx.t > 40) G.popFx = null; }
 }
 
+/* 脚下支撑面：0=地面，否则为所站平台的高度（只认脚下的，不认头顶的） */
+function supportAt(){
+  var best = 0;
+  for(var i=0;i<G.plats.length;i++){
+    var p = G.plats[i];
+    if(G.px + HERO_W*0.75 >= p.x && G.px + HERO_W*0.25 <= p.x + p.w &&
+       p.h <= G.py + 2 && p.h > best) best = p.h;
+  }
+  return best;
+}
 function applyPhysics(dt){
-  if(G.py > 0 || G.vy > 0){
+  var sup = supportAt();
+  if(G.py > sup + 0.5 || G.vy > 0){
+    var prev = G.py;
     G.py += G.vy * dt;
     G.vy -= GRAV * dt;
-    if(G.py <= 0){
+    // 单向平台：只在下落时接住，往上跳可以直接穿过
+    if(G.vy <= 0){
+      for(var i=0;i<G.plats.length;i++){
+        var p = G.plats[i];
+        if(G.px + HERO_W*0.75 >= p.x && G.px + HERO_W*0.25 <= p.x + p.w &&
+           prev >= p.h && G.py < p.h){
+          G.py = p.h; G.vy = 0;
+          G.coyote = COYOTE;
+          burst(G.px + HERO_W/2, GROUND - p.h - 6, 4, 'rgba(226,196,150,.7)', 2);
+          break;
+        }
+      }
+    }
+    if(G.py <= sup){
       var hard = G.vy < -6;
-      G.py = 0; G.vy = 0;
+      G.py = sup; G.vy = 0;
       G.coyote = COYOTE;
-      if(hard && G.phase === 'walk') burst(G.px + HERO_W/2, GROUND - 6, 5, 'rgba(226,196,150,.9)', 3);
+      if(hard && G.phase === 'walk') burst(G.px + HERO_W/2, GROUND - sup - 6, 5, 'rgba(226,196,150,.9)', 3);
       if(G.jbuf > 0 && G.phase === 'walk'){ G.jbuf = 0; doJump(); }
     }
   } else {
-    if(G.coyote > 0) G.coyote -= dt;
+    // 站在地面/平台上：随时可跳；走出平台边缘后 coyote 开始倒数（土狼时间）
+    G.coyote = COYOTE;
   }
   if(G.jbuf > 0) G.jbuf -= dt;
 }
@@ -3199,14 +3418,26 @@ function renderPets(){
     if(n > 0) owned++;
     if(petStage(f.id) >= 3) full++;
   });
-  $('petSub').textContent = '已收养 ' + owned + '/8 族 · 累计 ' + total + ' 只 · 完全体 ' + full + ' 只 · 开局护盾 ' + shieldCount() + ' 个';
+  var favFam = followFam();
+  $('petSub').textContent = '已收养 ' + owned + '/8 族 · 累计 ' + total + ' 只 · 完全体 ' + full + ' 只 · 开局护盾 ' + shieldCount() + ' 个'
+                          + '　|　随行：' + (favFam ? favFam.name : '还没带宠物');
   var g = $('petGrid');
   g.innerHTML = '';
   PETDEX.forEach(function(f){
     var n = save.pets[f.id] ? save.pets[f.id].n : 0;
     var st = petStage(f.id);
+    var isFav = favFam && favFam.id === f.id;
     var card = document.createElement('div');
-    card.className = 'petcard' + (st > 0 ? ' owned' : '') + (st >= 3 ? ' full' : '');
+    card.className = 'petcard' + (st > 0 ? ' owned' : '') + (st >= 3 ? ' full' : '') + (isFav ? ' fav' : '');
+    if(st > 0){
+      card.style.cursor = 'pointer';
+      card.title = '点一下，让它跟着你闯关';
+      card.onclick = function(){
+        save.fav = f.id; persist();
+        beep(880, 0.06, 'square', 0.04);
+        renderPets();
+      };
+    }
     var c2 = document.createElement('canvas');
     c2.width = 120; c2.height = 84;
     card.appendChild(c2);
@@ -3218,6 +3449,7 @@ function renderPets(){
     if(st === 0){
       info += '还没见过<br><span style="color:#566a82">' + f.tip + '</span>';
     } else {
+      if(isFav) info += '<span style="color:#ffd166">★ 随行中</span> · ';
       info += '<span class="st' + st + '">' + PET_STAGENAME[st] + '</span> · 已救 ' + n + ' 只';
       if(st < 3) info += '<br>再答对 ' + (PET_STAGE[st] - n) + ' 题进化' + PET_STAGENAME[st+1];
       else info += '<br>开局送 1 个护盾';
@@ -3292,6 +3524,9 @@ $('btnBack2').onclick = function(){ hide('failLayer'); renderMap(); show('mapLay
 $('btnSound').onclick = function(){
   soundOn = !soundOn;
   this.textContent = soundOn ? '🎵 开' : '🎵 关';
+  save.sound = soundOn; persist();          // 记住偏好，下次进来保持一致
+  if(soundOn) startMusic();                 // 音乐 + 音效一起开关
+  else stopMusic();
 };
 
 document.addEventListener('keydown', function(e){
@@ -3382,6 +3617,16 @@ cv.addEventListener('mousedown', tapJump);
 cv.addEventListener('touchstart', function(ev){ ev.preventDefault(); tapJump(); }, {passive:false});
 
 /* ============ 启动 ============ */
+soundOn = save.sound !== false;             // 恢复上次的音乐/音效开关
+$('btnSound').textContent = soundOn ? '🎵 开' : '🎵 关';
+// 浏览器自动播放策略：AudioContext 初始是 suspended，需要一次用户手势来解锁。
+// 任意点击/按键时恢复音频上下文并起播——这样在地图页（游戏一打开）点任何地方都有声音，🎵 按钮随时可关。
+function unlockAudio(){
+  if(actx && actx.state === 'suspended'){ try{ actx.resume(); }catch(e){} }
+  if(soundOn) startMusic();
+}
+document.addEventListener('pointerdown', unlockAudio, true);
+document.addEventListener('keydown', unlockAudio, true);
 renderMap();
 buildLevel(0);
 G.phase = 'idle';
